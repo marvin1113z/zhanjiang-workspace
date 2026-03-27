@@ -1,119 +1,25 @@
 {
   "projects": [
     {
-      "name": "风险大盘",
-      "desc": "",
-      "sd": "2026-03-27",
-      "ed": "",
-      "col": "#111",
-      "id": "mn8lensqhdtx",
-      "ct": "2026-03-27T07:41:29.210Z"
-    },
-    {
-      "name": "OS漏洞运营",
-      "desc": "",
-      "sd": "2026-03-27",
-      "ed": "",
-      "col": "#111",
-      "id": "mn8lfb7fnadb",
-      "ct": "2026-03-27T07:41:59.547Z"
-    },
-    {
-      "name": "3",
-      "desc": "",
+      "name": "大模型防火墙",
+      "desc": "T-shield",
       "col": "#ec4899",
-      "id": "mn8lsgg3woj3",
-      "ct": "2026-03-27T07:52:12.867Z"
-    },
-    {
-      "name": "呃我确认",
-      "desc": "",
-      "col": "#8b5cf6",
-      "id": "mn8mhvrth57v",
-      "ct": "2026-03-27T08:11:59.129Z"
+      "id": "mn8qmdz39wxd",
+      "ct": "2026-03-27T10:07:27.807Z"
     }
   ],
   "tasks": [
     {
-      "title": "任务1",
+      "title": "输出产品白皮书",
       "desc": "",
-      "pid": "mn8lensqhdtx",
-      "pr": "medium",
-      "st": "todo",
-      "sd": "2026-03-19",
-      "ed": "2026-04-07",
-      "id": "mn8leu9ttb8a",
-      "ct": "2026-03-27T07:41:37.601Z"
-    },
-    {
-      "title": "任务2",
-      "desc": "",
-      "pid": "mn8lensqhdtx",
-      "pr": "medium",
-      "st": "todo",
-      "sd": "2026-01-09",
-      "ed": "2026-05-09",
-      "id": "mn8lf5q26wwl",
-      "ct": "2026-03-27T07:41:52.442Z"
-    },
-    {
-      "title": "任务1",
-      "desc": "",
-      "pid": "mn8lfb7fnadb",
-      "pr": "medium",
-      "st": "todo",
-      "sd": "2026-03-16",
-      "ed": "",
-      "id": "mn8lfh79v4pj",
-      "ct": "2026-03-27T07:42:07.317Z"
-    },
-    {
-      "title": "任务2",
-      "desc": "",
-      "pid": "mn8lfb7fnadb",
-      "pr": "medium",
-      "st": "todo",
-      "sd": "2026-03-07",
-      "ed": "2026-04-11",
-      "id": "mn8lflvfci5n",
-      "ct": "2026-03-27T07:42:13.371Z"
-    },
-    {
-      "id": "mn8mg2b14l3g",
-      "title": "进行竞品调研",
-      "desc": "进行竞品调研",
-      "pid": "mn8lensqhdtx",
-      "pr": "medium",
-      "st": "todo",
+      "pid": "mn8qmdz39wxd",
+      "pr": "high",
+      "st": "doing",
       "sd": "2026-03-27",
-      "ed": "2026-04-25",
-      "ct": "2026-03-27T08:10:34.285Z"
+      "ed": "2026-03-28",
+      "id": "mn8qn2yhuv74",
+      "ct": "2026-03-27T10:08:00.185Z"
     }
   ],
-  "notes": [
-    {
-      "id": "mn8mg2b1w5jo",
-      "txt": "进行竞品调研",
-      "type": "project",
-      "pid": "mn8lensqhdtx",
-      "ct": "2026-03-27T08:10:34.285Z",
-      "taskId": "mn8mg2b14l3g"
-    },
-    {
-      "id": "mn8mgwuv8eyi",
-      "txt": "进行超时管理",
-      "type": "project",
-      "pid": "mn8lfb7fnadb",
-      "ct": "2026-03-27T08:11:13.879Z",
-      "taskId": null
-    },
-    {
-      "id": "mn8mhinlxra6",
-      "txt": "玩儿",
-      "type": "free",
-      "pid": null,
-      "ct": "2026-03-27T08:11:42.129Z",
-      "taskId": null
-    }
-  ]
+  "notes": []
 }
