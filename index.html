@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workspace — Marvin</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f7f7;--bg2:#fff;--bg3:#f0f0f0;--bg4:#e8e8e8;
+  --text:#0a0a0a;--text2:#555;--text3:#999;
+  --border:#e2e2e2;--border2:#ccc;
+  --accent:#0a0a0a;--danger:#b91c1c;
+  --radius:6px;--radius-lg:10px;
+  --shadow:0 1px 3px rgba(0,0,0,.06);
+  --tr:all .15s ease;
+}
+html{font-size:14px}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;background:var(--bg);color:var(--text);line-height:1.5;min-height:100vh}
+button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:inherit;color:inherit}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+#app{display:flex;height:100vh}
+.sidebar{width:224px;min-width:224px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.sidebar-header{padding:20px 18px 14px}
+.sidebar-header h1{font-size:15px;font-weight:700;letter-spacing:-.3px}
+.sidebar-header p{font-size:10.5px;color:var(--text3);margin-top:1px}
+.sidebar-nav{padding:6px 10px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:var(--radius);cursor:pointer;font-size:13px;color:var(--text2);transition:var(--tr);user-select:none}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--accent);color:#fff}
+.nav-icon{width:15px;text-align:center;font-size:12px;opacity:.7}
+.nav-item.active .nav-icon{opacity:1}
+.divider{height:1px;background:var(--border);margin:8px 16px}
+.section-label{padding:6px 18px 2px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3)}
+.project-list{flex:1;overflow-y:auto;padding:4px 10px}
+.project-item{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:var(--radius);cursor:pointer;font-size:13px;color:var(--text2);transition:var(--tr)}
+.project-item:hover{background:var(--bg3)}
+.project-item.active{background:var(--bg4);color:var(--text);font-weight:500}
+.project-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.project-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.project-count{font-size:10px;color:var(--text3);background:var(--bg3);border-radius:8px;padding:1px 6px;min-width:18px;text-align:center}
+.sidebar-footer{padding:10px 16px 14px;font-size:10px;color:var(--text3);text-align:center}
+
+.main-header{padding:16px 28px 14px;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.main-header h2{font-size:17px;font-weight:600;letter-spacing:-.2px}
+.header-right{display:flex;gap:8px;align-items:center}
+.badge{font-size:10px;padding:2px 8px;border-radius:8px;background:var(--bg3);color:var(--text3)}
+.content{flex:1;overflow-y:auto;padding:20px 28px 40px}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px}
+.stat .label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.stat .val{font-size:26px;font-weight:700;margin-top:2px;letter-spacing:-1px}
+.stat .sub{font-size:10.5px;color:var(--text3);margin-top:1px}
+
+.task-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:5px;transition:var(--tr)}
+.task-item:hover{border-color:var(--border2);box-shadow:var(--shadow)}
+.task-check{width:17px;height:17px;border:1.5px solid var(--border2);border-radius:50%;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:10px}
+.task-check.done{background:var(--accent);border-color:var(--accent);color:#fff}
+.task-body{flex:1;min-width:0}
+.task-title{font-size:13px;font-weight:500}
+.task-title.done{text-decoration:line-through;color:var(--text3)}
+.task-meta{display:flex;gap:6px;margin-top:3px;flex-wrap:wrap;align-items:center}
+.tag{font-size:10px;padding:1px 6px;border-radius:3px;font-weight:600;line-height:1.6}
+.p-urgent{background:var(--accent);color:#fff}
+.p-high{background:#444;color:#fff}
+.p-medium{background:#e0e0e0;color:#666}
+.p-low{background:#f2f2f2;color:#aaa}
+.task-date{font-size:10.5px;color:var(--text3)}
+.task-date.overdue{color:var(--danger);font-weight:500}
+.task-proj{font-size:10px;color:var(--text3);background:var(--bg3);padding:1px 6px;border-radius:3px}
+
+.tabs{display:flex;gap:1px;margin-bottom:14px;background:var(--bg3);border-radius:var(--radius);padding:2px;width:fit-content}
+.tab{padding:5px 12px;font-size:11.5px;border-radius:4px;color:var(--text2);transition:var(--tr)}
+.tab:hover{color:var(--text)}
+.tab.active{background:var(--bg2);color:var(--text);font-weight:500;box-shadow:var(--shadow)}
+
+/* Timeline */
+.tl-controls{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.btn{padding:6px 14px;border-radius:var(--radius);font-size:12px;font-weight:500;transition:var(--tr);display:inline-flex;align-items:center;gap:5px}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-ghost{color:var(--text2);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--bg3);color:var(--text)}
+.btn-sm{padding:4px 10px;font-size:11px}
+.tl-axis{position:relative;padding:0;margin-bottom:8px}
+.tl-axis-bar{display:flex;justify-content:space-between;padding:0 2px;margin-bottom:2px}
+.tl-axis-label{font-size:9.5px;color:var(--text3);font-weight:500}
+.tl-axis-track{position:relative;height:3px;background:var(--bg4);border-radius:2px}
+.tl-today-mark{position:absolute;top:-3px;width:2px;height:9px;background:var(--accent);border-radius:1px;z-index:2}
+.tl-today-label{position:absolute;top:-16px;font-size:9px;color:var(--accent);font-weight:600;transform:translateX(-50%);white-space:nowrap}
+.tl-group{margin-bottom:14px}
+.tl-proj-head{display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);cursor:pointer;transition:var(--tr);margin-bottom:2px}
+.tl-proj-head:hover{box-shadow:var(--shadow)}
+.tl-proj-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.tl-proj-name{font-size:13px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tl-proj-count{font-size:10.5px;color:var(--text3);flex-shrink:0}
+.tl-proj-toggle{font-size:10px;color:var(--text3);flex-shrink:0;transition:transform .15s;width:16px;text-align:center}
+.tl-proj-toggle.collapsed{transform:rotate(-90deg)}
+.tl-tasks{padding-left:18px;overflow:hidden;transition:max-height .2s ease,opacity .2s ease}
+.tl-tasks.collapsed{max-height:0!important;opacity:0}
+.tl-task-row{display:flex;align-items:center;gap:8px;padding:7px 14px 7px 12px;border-left:2px solid var(--bg4);margin-left:3px;transition:var(--tr)}
+.tl-task-row:hover{background:var(--bg3);border-radius:0 var(--radius) var(--radius) 0}
+.tl-task-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.tl-task-name{font-size:12px;flex-shrink:0;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)}
+.tl-task-name.done{text-decoration:line-through;color:var(--text3)}
+.tl-task-pri{font-size:9px;padding:0 5px;border-radius:2px;font-weight:600;flex-shrink:0;line-height:1.6}
+.tl-task-bar-wrap{flex:1;position:relative;height:16px;margin-left:4px}
+.tl-task-bar-bg{position:absolute;top:7px;left:0;right:0;height:2px;background:var(--bg4);border-radius:1px}
+.tl-task-bar{position:absolute;top:4px;height:8px;border-radius:3px;min-width:4px}
+.tl-task-bar.done-bar{opacity:.3}
+.tl-task-dates{font-size:10px;color:var(--text3);flex-shrink:0;min-width:90px;text-align:right}
+.tl-task-dates.overdue{color:var(--danger);font-weight:500}
+.tl-no-tasks{padding:6px 14px 6px 24px;font-size:11px;color:var(--text3);border-left:2px solid var(--bg4);margin-left:3px;font-style:italic}
+
+/* Notes */
+.note{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:6px;transition:var(--tr)}
+.note:hover{box-shadow:var(--shadow)}
+.note-text{font-size:13px;white-space:pre-wrap;word-break:break-word;line-height:1.6}
+.note-foot{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:10.5px;color:var(--text3)}
+.note-tags{display:flex;gap:4px;margin-top:4px}
+.note-tag{font-size:9.5px;padding:1px 6px;border-radius:3px;background:var(--bg3);color:var(--text3)}
+
+.sec-head{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);padding:3px 0;margin-bottom:6px;font-weight:600}
+.proj-info{margin-top:20px;padding-top:14px;border-top:1px solid var(--border);font-size:12px;color:var(--text3)}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 20px;color:var(--text3)}
+.empty .ei{font-size:36px;margin-bottom:10px;opacity:.25}
+.empty p{font-size:12.5px;margin-bottom:14px}
+.loading{display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:13px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="sidebar">
+    <div class="sidebar-header"><h1>Workspace</h1><p>Marvin 的项目管理</p></div>
+    <div class="sidebar-nav">
+      <div class="nav-item active" data-v="dashboard" onclick="go('dashboard')"><span class="nav-icon">◉</span>总览</div>
+      <div class="nav-item" data-v="timeline" onclick="go('timeline')"><span class="nav-icon">━</span>时间轴</div>
+      <div class="nav-item" data-v="notes" onclick="go('notes')"><span class="nav-icon">✎</span>想法</div>
+    </div>
+    <div class="divider"></div>
+    <div class="section-label">项目</div>
+    <div class="project-list" id="pl"></div>
+    <div class="sidebar-footer">只读模式 · 数据由管理员维护</div>
+  </div>
+  <div class="main">
+    <div class="main-header"><h2 id="vt">总览</h2><div class="header-right" id="hr"></div></div>
+    <div class="content" id="mc"><div class="loading">加载中…</div></div>
+  </div>
+</div>
+
+<script>
+let D={projects:[],tasks:[],notes:[]};
+const td=()=>new Date().toISOString().slice(0,10);
+const esc=s=>s?s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):'';
+
+let view='dashboard',curProj=null,tlScope='all',filter='all';
+let tlCollapsed={};
+
+// Load data from JSON file
+async function loadData(){
+  try{
+    const r=await fetch('data.json?t='+Date.now());
+    if(!r.ok)throw new Error('not found');
+    D=await r.json();
+  }catch(e){
+    D={projects:[],tasks:[],notes:[]};
+  }
+  R();
+}
+
+function go(v,pid){
+  view=v;curProj=pid||null;filter='all';
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.v===v&&!pid));
+  document.querySelectorAll('.project-item').forEach(n=>n.classList.toggle('active',n.dataset.id===pid));
+  R();
+}
+
+function R(){
+  rPL();
+  ({dashboard:rDash,project:rProj,timeline:rTL,notes:rNotes})[view]?.();
+}
+
+function rPL(){
+  document.getElementById('pl').innerHTML=D.projects.map(p=>{
+    const c=D.tasks.filter(t=>t.pid===p.id&&t.st!=='done').length;
+    return`<div class="project-item${curProj===p.id?' active':''}" data-id="${p.id}" onclick="go('project','${p.id}')">
+      <span class="project-dot" style="background:${p.col}"></span>
+      <span class="project-name">${esc(p.name)}</span>
+      ${c?`<span class="project-count">${c}</span>`:''}
+    </div>`;
+  }).join('');
+}
+
+function rDash(){
+  $('vt','总览');$h('<span class="badge">只读</span>');
+  const ts=D.tasks;
+  const todo=ts.filter(t=>t.st==='todo').length,doing=ts.filter(t=>t.st==='doing').length,done=ts.filter(t=>t.st==='done').length;
+  const urg=ts.filter(t=>t.pr==='urgent'&&t.st!=='done').length;
+  const od=ts.filter(t=>t.ed&&t.ed<td()&&t.st!=='done').length;
+  let h=`<div class="stats">
+    <div class="stat"><div class="label">项目</div><div class="val">${D.projects.length}</div></div>
+    <div class="stat"><div class="label">任务</div><div class="val">${ts.length}</div><div class="sub">待办${todo} · 进行${doing} · 完成${done}</div></div>
+    <div class="stat"><div class="label">紧急</div><div class="val">${urg}</div></div>
+    <div class="stat"><div class="label">逾期</div><div class="val">${od}</div><div class="sub">${od?'需处理':'良好'}</div></div>
+  </div>`;
+  const act=ts.filter(t=>t.st!=='done').sort(pSort);
+  h+=act.length?tList(act,true):`<div class="empty"><div class="ei">✓</div><p>暂无待办</p></div>`;
+  $c(h);
+}
+
+function rProj(){
+  const p=D.projects.find(x=>x.id===curProj);
+  if(!p)return go('dashboard');
+  $('vt',p.name);$h('<span class="badge">只读</span>');
+  let ts=D.tasks.filter(t=>t.pid===p.id);
+  const cn={all:ts.length,todo:ts.filter(t=>t.st==='todo').length,doing:ts.filter(t=>t.st==='doing').length,done:ts.filter(t=>t.st==='done').length};
+  let h=`<div class="tabs">
+    ${['all','todo','doing','done'].map(f=>`<button class="tab${filter===f?' active':''}" onclick="filter='${f}';R()">${{all:'全部',todo:'待办',doing:'进行',done:'完成'}[f]} ${cn[f]}</button>`).join('')}
+  </div>`;
+  if(filter!=='all')ts=ts.filter(t=>t.st===filter);
+  ts.sort(pSort);
+  h+=ts.length?tList(ts,false):`<div class="empty"><div class="ei">☐</div><p>暂无任务</p></div>`;
+  if(p.desc){h+=`<div class="proj-info">${esc(p.desc)}</div>`}
+  $c(h);
+}
+
+function tList(ts,showP){
+  return ts.map(t=>{
+    const proj=showP?D.projects.find(p=>p.id===t.pid):null;
+    const ov=t.ed&&t.ed<td()&&t.st!=='done';
+    return`<div class="task-item">
+      <div class="task-check${t.st==='done'?' done':''}">${t.st==='done'?'✓':''}</div>
+      <div class="task-body">
+        <div class="task-title${t.st==='done'?' done':''}">${esc(t.title)}</div>
+        <div class="task-meta">
+          <span class="tag p-${t.pr}">${{urgent:'紧急',high:'高',medium:'中',low:'低'}[t.pr]}</span>
+          ${t.st==='doing'?'<span class="tag" style="background:#f5f5f5;color:#666">进行中</span>':''}
+          ${t.ed?`<span class="task-date${ov?' overdue':''}">${ov?'⚠ ':''}${t.ed}</span>`:''}
+          ${proj?`<span class="task-proj">${esc(proj.name)}</span>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function rTL(){
+  $('vt','时间轴');$h('<span class="badge">只读</span>');
+  let projects=tlScope==='all'?D.projects:D.projects.filter(p=>p.id===tlScope);
+  let h=`<div class="tl-controls">
+    <button class="btn btn-sm ${tlScope==='all'?'btn-primary':'btn-ghost'}" onclick="tlScope='all';rTL()">全部</button>`;
+  D.projects.forEach(p=>{h+=`<button class="btn btn-sm ${tlScope===p.id?'btn-primary':'btn-ghost'}" onclick="tlScope='${p.id}';rTL()">${esc(p.name)}</button>`});
+  h+=`</div>`;
+  if(!projects.length){$c(h+`<div class="empty"><div class="ei">━</div><p>暂无项目</p></div>`);return}
+  const allDates=[td()];
+  projects.forEach(p=>{D.tasks.filter(t=>t.pid===p.id).forEach(t=>{if(t.sd)allDates.push(t.sd);if(t.ed)allDates.push(t.ed)})});
+  allDates.sort();
+  if(allDates.length<2){$c(h+`<div class="empty"><div class="ei">━</div><p>暂无时间数据</p></div>`);return}
+  const gMin=new Date(allDates[0]),gMax=new Date(allDates[allDates.length-1]);
+  gMin.setDate(gMin.getDate()-1);gMax.setDate(gMax.getDate()+1);
+  const gSpan=Math.max((gMax-gMin)/(864e5),1);
+  const pct=d=>{if(!d)return null;const v=(new Date(d)-gMin)/(864e5);return Math.max(0,Math.min(100,v/gSpan*100))};
+  const todayPct=pct(td());
+  const fmtD=d=>d?d.slice(5).replace('-','/'):'';
+  h+=`<div class="tl-axis"><div class="tl-axis-bar"><span class="tl-axis-label">${fmtD(allDates[0])}</span><span class="tl-axis-label">${fmtD(allDates[allDates.length-1])}</span></div><div class="tl-axis-track">`;
+  if(todayPct!==null)h+=`<div class="tl-today-mark" style="left:${todayPct}%"><span class="tl-today-label">今天</span></div>`;
+  h+=`</div></div>`;
+  projects.forEach(p=>{
+    const tasks=D.tasks.filter(t=>t.pid===p.id).sort(pSort);
+    const isC=tlCollapsed[p.id];
+    const ac=tasks.filter(t=>t.st!=='done').length;
+    h+=`<div class="tl-group"><div class="tl-proj-head" onclick="tlCollapsed['${p.id}']=!tlCollapsed['${p.id}'];rTL()">
+      <span class="tl-proj-dot" style="background:${p.col}"></span><span class="tl-proj-name">${esc(p.name)}</span>
+      <span class="tl-proj-count">${ac} 进行中</span><span class="tl-proj-toggle${isC?' collapsed':''}">▾</span></div>`;
+    h+=`<div class="tl-tasks${isC?' collapsed':''}" style="max-height:${isC?0:tasks.length*38+40}px">`;
+    if(tasks.length){tasks.forEach(t=>{
+      const tL=pct(t.sd),tR=pct(t.ed);const tW=(tL!==null&&tR!==null)?Math.max(tR-tL,.3):0;
+      const ov=t.ed&&t.ed<td()&&t.st!=='done';const isDone=t.st==='done';
+      let ds='';if(t.sd&&t.ed)ds=fmtD(t.sd)+' → '+fmtD(t.ed);else if(t.sd)ds=fmtD(t.sd)+' →';else if(t.ed)ds='→ '+fmtD(t.ed);
+      h+=`<div class="tl-task-row"><span class="tl-task-dot" style="background:${p.col};opacity:${isDone?.3:.6}"></span>
+        <span class="tl-task-name${isDone?' done':''}">${esc(t.title)}</span>
+        <span class="tl-task-pri tag p-${t.pr}">${{urgent:'紧急',high:'高',medium:'中',low:'低'}[t.pr]}</span>
+        <div class="tl-task-bar-wrap"><div class="tl-task-bar-bg"></div>${tW?`<div class="tl-task-bar${isDone?' done-bar':''}" style="left:${tL}%;width:${tW}%;background:${p.col};opacity:${isDone?.25:.5}"></div>`:''}</div>
+        <span class="tl-task-dates${ov?' overdue':''}">${ov?'⚠ ':''}${ds||'—'}</span></div>`;
+    })}else{h+=`<div class="tl-no-tasks">暂无任务</div>`}
+    h+=`</div></div>`;
+  });
+  $c(h);
+}
+
+function rNotes(){
+  $('vt','想法');$h('<span class="badge">只读</span>');
+  let h='';
+  if(D.notes.length){
+    [...D.notes].sort((a,b)=>b.ct.localeCompare(a.ct)).forEach(n=>{
+      const proj=n.pid?D.projects.find(p=>p.id===n.pid):null;
+      h+=`<div class="note"><div class="note-text">${esc(n.txt)}</div><div class="note-tags">
+        ${n.type==='free'?'<span class="note-tag">灵感</span>':''}
+        ${proj?`<span class="note-tag" style="border-left:2px solid ${proj.col};padding-left:6px">${esc(proj.name)}</span>`:''}
+        ${n.taskId?'<span class="note-tag">已转任务</span>':''}</div>
+        <div class="note-foot"><span>${fmt(n.ct)}</span></div></div>`;
+    });
+  }else{h+=`<div class="empty"><div class="ei">✎</div><p>暂无想法记录</p></div>`}
+  $c(h);
+}
+
+function pSort(a,b){return po(a.pr)-po(b.pr)}
+function po(p){return{urgent:0,high:1,medium:2,low:3}[p]||2}
+function fmt(iso){const d=new Date(iso);return`${d.getMonth()+1}-${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
+function $(i,v){document.getElementById(i).textContent=v}
+function $h(v){document.getElementById('hr').innerHTML=v}
+function $c(v){document.getElementById('mc').innerHTML=v}
+
+loadData();
+</script>
+</body>
+</html>
