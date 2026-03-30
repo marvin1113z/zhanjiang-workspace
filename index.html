@@ -3,21 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Workspace — Marvin</title>
+<title>Workspace</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#f7f7f7;--bg2:#fff;--bg3:#f0f0f0;--bg4:#e8e8e8;
   --text:#0a0a0a;--text2:#555;--text3:#999;
   --border:#e2e2e2;--border2:#ccc;
-  --accent:#0a0a0a;--danger:#b91c1c;
+  --accent:#0a0a0a;--accent-hover:#333;
+  --danger:#b91c1c;
   --radius:6px;--radius-lg:10px;
   --shadow:0 1px 3px rgba(0,0,0,.06);
+  --shadow-lg:0 6px 24px rgba(0,0,0,.1);
   --tr:all .15s ease;
 }
 html{font-size:14px}
 body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;background:var(--bg);color:var(--text);line-height:1.5;min-height:100vh}
 button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:inherit;color:inherit}
+input,textarea,select{font-family:inherit;font-size:13px;color:var(--text);border:1px solid var(--border);border-radius:var(--radius);padding:7px 10px;background:var(--bg2);outline:none;transition:var(--tr);width:100%}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+textarea{resize:vertical}
+::placeholder{color:var(--text3)}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
@@ -43,12 +49,29 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
 .project-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .project-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .project-count{font-size:10px;color:var(--text3);background:var(--bg3);border-radius:8px;padding:1px 6px;min-width:18px;text-align:center}
-.sidebar-footer{padding:10px 16px 14px;font-size:10px;color:var(--text3);text-align:center}
+.sidebar-footer{padding:10px;display:flex;flex-direction:column;gap:6px}
+.btn-new{width:100%;padding:8px;border-radius:var(--radius);font-size:12px;display:flex;align-items:center;justify-content:center;gap:5px;color:var(--text3);border:1px dashed var(--border);transition:var(--tr)}
+.btn-new:hover{border-color:var(--accent);color:var(--text);background:var(--bg3)}
+.sidebar-mode{text-align:center;font-size:10px;color:var(--text3);padding:4px 0}
+.sidebar-mode .mode-tag{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:8px;font-weight:600}
+.mode-admin{background:#22c55e;color:#fff}
+.mode-read{background:var(--bg3);color:var(--text3)}
+.btn-login{width:100%;padding:7px;border-radius:var(--radius);font-size:11px;color:var(--text3);border:1px solid var(--border);transition:var(--tr);text-align:center}
+.btn-login:hover{background:var(--bg3);color:var(--text);border-color:var(--border2)}
 
 .main-header{padding:16px 28px 14px;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .main-header h2{font-size:17px;font-weight:600;letter-spacing:-.2px}
 .header-right{display:flex;gap:8px;align-items:center}
-.badge{font-size:10px;padding:2px 8px;border-radius:8px;background:var(--bg3);color:var(--text3)}
+.btn{padding:6px 14px;border-radius:var(--radius);font-size:12px;font-weight:500;transition:var(--tr);display:inline-flex;align-items:center;gap:5px}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-hover)}
+.btn-ghost{color:var(--text2);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--bg3);color:var(--text)}
+.btn-sm{padding:4px 10px;font-size:11px}
+.btn-danger{color:var(--danger)}
+.btn-danger:hover{background:rgba(185,28,28,.06)}
+.btn-icon{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius);color:var(--text2);font-size:14px}
+.btn-icon:hover{background:var(--bg3);color:var(--text)}
 .content{flex:1;overflow-y:auto;padding:20px 28px 40px}
 
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px}
@@ -57,9 +80,12 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
 .stat .val{font-size:26px;font-weight:700;margin-top:2px;letter-spacing:-1px}
 .stat .sub{font-size:10.5px;color:var(--text3);margin-top:1px}
 
-.task-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:5px;transition:var(--tr)}
+.task-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:5px;transition:var(--tr);cursor:default}
+.task-item.editable{cursor:pointer}
 .task-item:hover{border-color:var(--border2);box-shadow:var(--shadow)}
 .task-check{width:17px;height:17px;border:1.5px solid var(--border2);border-radius:50%;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:10px}
+.task-check.clickable{cursor:pointer;transition:var(--tr)}
+.task-check.clickable:hover{border-color:var(--accent)}
 .task-check.done{background:var(--accent);border-color:var(--accent);color:#fff}
 .task-body{flex:1;min-width:0}
 .task-title{font-size:13px;font-weight:500}
@@ -78,14 +104,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
 .tab{padding:5px 12px;font-size:11.5px;border-radius:4px;color:var(--text2);transition:var(--tr)}
 .tab:hover{color:var(--text)}
 .tab.active{background:var(--bg2);color:var(--text);font-weight:500;box-shadow:var(--shadow)}
+.quick-add{display:flex;gap:8px;margin-bottom:14px}
+.quick-add input{flex:1;font-size:13px}
 
-/* Timeline */
 .tl-controls{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
-.btn{padding:6px 14px;border-radius:var(--radius);font-size:12px;font-weight:500;transition:var(--tr);display:inline-flex;align-items:center;gap:5px}
-.btn-primary{background:var(--accent);color:#fff}
-.btn-ghost{color:var(--text2);border:1px solid var(--border)}
-.btn-ghost:hover{background:var(--bg3);color:var(--text)}
-.btn-sm{padding:4px 10px;font-size:11px}
 .tl-axis{position:relative;padding:0;margin-bottom:8px}
 .tl-axis-bar{display:flex;justify-content:space-between;padding:0 2px;margin-bottom:2px}
 .tl-axis-label{font-size:9.5px;color:var(--text3);font-weight:500}
@@ -116,26 +138,65 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
 .tl-task-dates.overdue{color:var(--danger);font-weight:500}
 .tl-no-tasks{padding:6px 14px 6px 24px;font-size:11px;color:var(--text3);border-left:2px solid var(--bg4);margin-left:3px;font-style:italic}
 
-/* Notes */
+.note-wizard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:20px}
+.nw-step{margin-bottom:14px}.nw-step:last-child{margin-bottom:0}
+.nw-label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.nw-step-num{width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+.nw-options{display:flex;gap:6px;flex-wrap:wrap}
+.nw-opt{padding:6px 14px;border-radius:var(--radius);font-size:12px;border:1px solid var(--border);color:var(--text2);transition:var(--tr);cursor:pointer}
+.nw-opt:hover{border-color:var(--accent);color:var(--text)}
+.nw-opt.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.nw-content textarea{min-height:60px;font-size:13px}
+.nw-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.nw-connector{width:1px;height:10px;background:var(--bg4);margin:0 0 0 8px}
+.nw-task-form{background:var(--bg3);border-radius:var(--radius);padding:12px;margin-top:8px}
+.nw-task-form .fr{display:flex;gap:8px}
+.nw-task-form .fg{margin-bottom:8px}.nw-task-form .fg:last-child{margin-bottom:0}
+.nw-task-form .fg label{display:block;font-size:10px;font-weight:600;color:var(--text2);margin-bottom:2px;text-transform:uppercase;letter-spacing:.3px}
+
 .note{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:6px;transition:var(--tr)}
 .note:hover{box-shadow:var(--shadow)}
 .note-text{font-size:13px;white-space:pre-wrap;word-break:break-word;line-height:1.6}
 .note-foot{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:10.5px;color:var(--text3)}
+.note-foot button{font-size:10.5px;color:var(--text3);padding:2px 6px;border-radius:3px}
+.note-foot button:hover{background:var(--bg3);color:var(--text)}
 .note-tags{display:flex;gap:4px;margin-top:4px}
 .note-tag{font-size:9.5px;padding:1px 6px;border-radius:3px;background:var(--bg3);color:var(--text3)}
 
-.sec-head{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);padding:3px 0;margin-bottom:6px;font-weight:600}
-.proj-info{margin-top:20px;padding-top:14px;border-top:1px solid var(--border);font-size:12px;color:var(--text3)}
+.color-picker{display:flex;gap:6px;flex-wrap:wrap;padding:4px 0}
+.color-swatch{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:var(--tr);position:relative}
+.color-swatch:hover{transform:scale(1.15)}
+.color-swatch.active{border-color:var(--accent);box-shadow:0 0 0 2px var(--bg2),0 0 0 4px var(--accent)}
+.color-swatch.active::after{content:'\2713';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-10px);background:var(--accent);color:#fff;padding:8px 20px;border-radius:var(--radius);font-size:12.5px;font-weight:500;z-index:200;opacity:0;pointer-events:none;transition:all .2s ease;box-shadow:var(--shadow-lg)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:100;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .15s}
+.modal-bg.show{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border-radius:var(--radius-lg);width:460px;max-width:92vw;max-height:85vh;overflow-y:auto;box-shadow:var(--shadow-lg);transform:scale(.97);transition:transform .15s}
+.modal-bg.show .modal{transform:scale(1)}
+.modal-head{padding:16px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-head h3{font-size:14px;font-weight:600}
+.modal-body{padding:16px 20px}
+.modal-foot{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.fg{margin-bottom:12px}
+.fg label{display:block;font-size:10.5px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px}
+.fr{display:flex;gap:10px}
+.fr .fg{flex:1}
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 20px;color:var(--text3)}
 .empty .ei{font-size:36px;margin-bottom:10px;opacity:.25}
 .empty p{font-size:12.5px;margin-bottom:14px}
-.loading{display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:13px}
+.sec-head{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);padding:3px 0;margin-bottom:6px;font-weight:600}
+.proj-info{margin-top:20px;padding-top:14px;border-top:1px solid var(--border);font-size:12px;color:var(--text3)}
+.saving-indicator{position:fixed;bottom:16px;right:16px;font-size:11px;color:var(--text3);background:var(--bg2);border:1px solid var(--border);padding:4px 12px;border-radius:var(--radius);box-shadow:var(--shadow);opacity:0;transition:opacity .2s;z-index:50}
+.saving-indicator.show{opacity:1}
 </style>
 </head>
 <body>
 <div id="app">
   <div class="sidebar">
-    <div class="sidebar-header"><h1>Workspace</h1><p>Marvin 的项目管理</p></div>
+    <div class="sidebar-header"><h1>Workspace</h1><p>项目 · 任务 · 想法</p></div>
     <div class="sidebar-nav">
       <div class="nav-item active" data-v="dashboard" onclick="go('dashboard')"><span class="nav-icon">◉</span>总览</div>
       <div class="nav-item" data-v="timeline" onclick="go('timeline')"><span class="nav-icon">━</span>时间轴</div>
@@ -144,177 +205,205 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:
     <div class="divider"></div>
     <div class="section-label">项目</div>
     <div class="project-list" id="pl"></div>
-    <div class="sidebar-footer">只读模式 · 数据由管理员维护</div>
+    <div class="sidebar-footer" id="sidebarFooter"></div>
   </div>
   <div class="main">
     <div class="main-header"><h2 id="vt">总览</h2><div class="header-right" id="hr"></div></div>
-    <div class="content" id="mc"><div class="loading">加载中…</div></div>
+    <div class="content" id="mc"></div>
   </div>
 </div>
+<div class="toast" id="toast"></div>
+<div class="saving-indicator" id="saving">保存中…</div>
+
+<!-- Project Modal -->
+<div class="modal-bg" id="pm"><div class="modal">
+  <div class="modal-head"><h3 id="pmt">新建项目</h3><button class="btn-icon" onclick="cm('pm')">✕</button></div>
+  <div class="modal-body">
+    <div class="fg"><label>名称</label><input id="pn" placeholder="项目名称"></div>
+    <div class="fg"><label>描述</label><textarea id="pd" rows="2" placeholder="简要描述"></textarea></div>
+    <div class="fg"><label>色调</label><div class="color-picker" id="cpicker"></div></div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn btn-danger" id="pdel" style="margin-right:auto;display:none" onclick="delProj()">删除</button>
+    <button class="btn btn-ghost" onclick="cm('pm')">取消</button>
+    <button class="btn btn-primary" id="psb" onclick="saveP()">创建</button>
+  </div>
+</div></div>
+
+<!-- Task Modal -->
+<div class="modal-bg" id="tm"><div class="modal">
+  <div class="modal-head"><h3 id="tmt">新建任务</h3><button class="btn-icon" onclick="cm('tm')">✕</button></div>
+  <div class="modal-body">
+    <div class="fg"><label>任务</label><input id="tt" placeholder="任务标题"></div>
+    <div class="fg"><label>描述</label><textarea id="td" rows="2" placeholder="补充说明"></textarea></div>
+    <div class="fg"><label>所属项目</label><select id="tp"></select></div>
+    <div class="fr">
+      <div class="fg"><label>优先级</label><select id="tpr"><option value="urgent">紧急</option><option value="high">高</option><option value="medium" selected>中</option><option value="low">低</option></select></div>
+      <div class="fg"><label>状态</label><select id="ts"><option value="todo">待办</option><option value="doing">进行中</option><option value="done">已完成</option></select></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>开始</label><input type="date" id="tsd"></div>
+      <div class="fg"><label>截止</label><input type="date" id="ted"></div>
+    </div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn btn-danger" id="tdb" style="margin-right:auto;display:none" onclick="delTask()">删除</button>
+    <button class="btn btn-ghost" onclick="cm('tm')">取消</button>
+    <button class="btn btn-primary" id="tsb" onclick="saveT()">创建</button>
+  </div>
+</div></div>
+
+<!-- Login Modal -->
+<div class="modal-bg" id="lm"><div class="modal" style="width:340px">
+  <div class="modal-head"><h3>进入管理模式</h3><button class="btn-icon" onclick="cm('lm')">✕</button></div>
+  <div class="modal-body">
+    <div class="fg"><label>管理密码</label><input id="loginPw" type="password" placeholder="输入密码" onkeydown="if(event.key==='Enter')doLogin()"></div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn btn-ghost" onclick="cm('lm')">取消</button>
+    <button class="btn btn-primary" onclick="doLogin()">确认</button>
+  </div>
+</div></div>
 
 <script>
+// ===== CONFIG =====
+const SB_URL='https://pugnszrucysnnmbvevaa.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1Z25zenJ1Y3lzbm5tYnZldmFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NjgyNzEsImV4cCI6MjA5MDQ0NDI3MX0.KbneFwdr1oiv8HeyRTZTUhMixxUx5k067eQnN8YzuXo';
+const ADMIN_PW='marvin2026';
+
+// ===== SUPABASE REST =====
+const sbHeaders={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'};
+
+async function sbLoad(){
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/workspace_data?id=eq.main&select=data',{headers:sbHeaders});
+    const rows=await r.json();
+    if(rows.length&&rows[0].data)return rows[0].data;
+  }catch(e){console.error('Load error',e)}
+  return {projects:[],tasks:[],notes:[]};
+}
+
+let saveTimer=null;
+function sbSave(){
+  clearTimeout(saveTimer);
+  document.getElementById('saving').classList.add('show');
+  saveTimer=setTimeout(async()=>{
+    try{
+      await fetch(SB_URL+'/rest/v1/workspace_data?id=eq.main',{
+        method:'PATCH',headers:sbHeaders,
+        body:JSON.stringify({data:D,updated_at:new Date().toISOString()})
+      });
+    }catch(e){console.error('Save error',e);toast('保存失败，请检查网络')}
+    document.getElementById('saving').classList.remove('show');
+  },600);
+}
+
+// ===== DATA =====
 let D={projects:[],tasks:[],notes:[]};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const td=()=>new Date().toISOString().slice(0,10);
 const esc=s=>s?s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):'';
+const COLORS=[{v:'#111',n:'黑'},{v:'#444',n:'深灰'},{v:'#777',n:'灰'},{v:'#aaa',n:'浅灰'},{v:'#3b82f6',n:'蓝'},{v:'#0ea5e9',n:'天蓝'},{v:'#8b5cf6',n:'紫'},{v:'#ec4899',n:'粉'},{v:'#f97316',n:'橙'},{v:'#eab308',n:'黄'},{v:'#22c55e',n:'绿'}];
+let selColor='#111';
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2000)}
 
-let view='dashboard',curProj=null,tlScope='all',filter='all';
+// ===== AUTH =====
+let isAdmin=false;
+function checkAdmin(){isAdmin=sessionStorage.getItem('ws_admin')==='1'}
+function doLogin(){
+  const pw=document.getElementById('loginPw').value;
+  if(pw===ADMIN_PW){sessionStorage.setItem('ws_admin','1');isAdmin=true;cm('lm');R();rFooter();toast('已进入管理模式')}
+  else{toast('密码错误')}
+}
+function logout(){sessionStorage.removeItem('ws_admin');isAdmin=false;R();rFooter();toast('已退出管理模式')}
+
+function rFooter(){
+  const el=document.getElementById('sidebarFooter');
+  if(isAdmin){
+    el.innerHTML=`<button class="btn-new" onclick="openPM()">+ 新建项目</button>
+      <div class="sidebar-mode"><span class="mode-tag mode-admin">● 管理模式</span></div>
+      <button class="btn-login" onclick="logout()">退出管理</button>`;
+  }else{
+    el.innerHTML=`<div class="sidebar-mode"><span class="mode-tag mode-read">只读模式</span></div>
+      <button class="btn-login" onclick="om('lm');setTimeout(()=>document.getElementById('loginPw').focus(),100)">进入管理</button>`;
+  }
+}
+
+// ===== STATE =====
+let view='dashboard',curProj=null,editP=null,editT=null,tlScope='all',filter='all';
+let nwStep=1,nwType=null,nwProjId=null,nwText='',nwMakeTask=null;
 let tlCollapsed={};
 
-// Load data from JSON file
-async function loadData(){
-  try{
-    const r=await fetch('data.json?t='+Date.now());
-    if(!r.ok)throw new Error('not found');
-    D=await r.json();
-  }catch(e){
-    D={projects:[],tasks:[],notes:[]};
-  }
-  R();
-}
-
-function go(v,pid){
-  view=v;curProj=pid||null;filter='all';
+function go(v,pid){view=v;curProj=pid||null;filter='all';nwStep=1;nwType=null;nwProjId=null;nwText='';nwMakeTask=null;
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.v===v&&!pid));
-  document.querySelectorAll('.project-item').forEach(n=>n.classList.toggle('active',n.dataset.id===pid));
-  R();
-}
+  document.querySelectorAll('.project-item').forEach(n=>n.classList.toggle('active',n.dataset.id===pid));R()}
+function R(){rPL();({dashboard:rDash,project:rProj,timeline:rTL,notes:rNotes})[view]?.()}
+function rPL(){document.getElementById('pl').innerHTML=D.projects.map(p=>{const c=D.tasks.filter(t=>t.pid===p.id&&t.st!=='done').length;return`<div class="project-item${curProj===p.id?' active':''}" data-id="${p.id}" onclick="go('project','${p.id}')"><span class="project-dot" style="background:${p.col}"></span><span class="project-name">${esc(p.name)}</span>${c?`<span class="project-count">${c}</span>`:''}</div>`}).join('')}
 
-function R(){
-  rPL();
-  ({dashboard:rDash,project:rProj,timeline:rTL,notes:rNotes})[view]?.();
-}
+// ===== DASHBOARD =====
+function rDash(){$('vt','总览');$h(isAdmin?`<button class="btn btn-primary" onclick="openTM()">+ 任务</button>`:'');const ts=D.tasks;const todo=ts.filter(t=>t.st==='todo').length,doing=ts.filter(t=>t.st==='doing').length,done=ts.filter(t=>t.st==='done').length;const urg=ts.filter(t=>t.pr==='urgent'&&t.st!=='done').length;const od=ts.filter(t=>t.ed&&t.ed<td()&&t.st!=='done').length;let h=`<div class="stats"><div class="stat"><div class="label">项目</div><div class="val">${D.projects.length}</div></div><div class="stat"><div class="label">任务</div><div class="val">${ts.length}</div><div class="sub">待办${todo} · 进行${doing} · 完成${done}</div></div><div class="stat"><div class="label">紧急</div><div class="val">${urg}</div></div><div class="stat"><div class="label">逾期</div><div class="val">${od}</div><div class="sub">${od?'需处理':'良好'}</div></div></div>`;const act=ts.filter(t=>t.st!=='done').sort(pSort);h+=act.length?tList(act,true):`<div class="empty"><div class="ei">✓</div><p>暂无待办</p>${isAdmin?'<button class="btn btn-primary" onclick="openTM()">创建任务</button>':''}</div>`;$c(h)}
 
-function rPL(){
-  document.getElementById('pl').innerHTML=D.projects.map(p=>{
-    const c=D.tasks.filter(t=>t.pid===p.id&&t.st!=='done').length;
-    return`<div class="project-item${curProj===p.id?' active':''}" data-id="${p.id}" onclick="go('project','${p.id}')">
-      <span class="project-dot" style="background:${p.col}"></span>
-      <span class="project-name">${esc(p.name)}</span>
-      ${c?`<span class="project-count">${c}</span>`:''}
-    </div>`;
-  }).join('');
-}
+// ===== PROJECT =====
+function rProj(){const p=D.projects.find(x=>x.id===curProj);if(!p)return go('dashboard');$('vt',p.name);$h(isAdmin?`<button class="btn btn-ghost btn-sm" onclick="openPM('${p.id}')">编辑</button><button class="btn btn-primary btn-sm" onclick="openTM(null,'${p.id}')">+ 任务</button>`:'');let ts=D.tasks.filter(t=>t.pid===p.id);const cn={all:ts.length,todo:ts.filter(t=>t.st==='todo').length,doing:ts.filter(t=>t.st==='doing').length,done:ts.filter(t=>t.st==='done').length};let h=`<div class="tabs">${['all','todo','doing','done'].map(f=>`<button class="tab${filter===f?' active':''}" onclick="filter='${f}';R()">${{all:'全部',todo:'待办',doing:'进行',done:'完成'}[f]} ${cn[f]}</button>`).join('')}</div>`;if(isAdmin)h+=`<div class="quick-add"><input id="qi" placeholder="快速添加，回车确认" onkeydown="qAdd(event,'${p.id}')"></div>`;if(filter!=='all')ts=ts.filter(t=>t.st===filter);ts.sort(pSort);h+=ts.length?tList(ts,false):`<div class="empty"><div class="ei">☐</div><p>暂无任务</p></div>`;if(p.desc){h+=`<div class="proj-info">${esc(p.desc)}</div>`}$c(h)}
 
-function rDash(){
-  $('vt','总览');$h('<span class="badge">只读</span>');
-  const ts=D.tasks;
-  const todo=ts.filter(t=>t.st==='todo').length,doing=ts.filter(t=>t.st==='doing').length,done=ts.filter(t=>t.st==='done').length;
-  const urg=ts.filter(t=>t.pr==='urgent'&&t.st!=='done').length;
-  const od=ts.filter(t=>t.ed&&t.ed<td()&&t.st!=='done').length;
-  let h=`<div class="stats">
-    <div class="stat"><div class="label">项目</div><div class="val">${D.projects.length}</div></div>
-    <div class="stat"><div class="label">任务</div><div class="val">${ts.length}</div><div class="sub">待办${todo} · 进行${doing} · 完成${done}</div></div>
-    <div class="stat"><div class="label">紧急</div><div class="val">${urg}</div></div>
-    <div class="stat"><div class="label">逾期</div><div class="val">${od}</div><div class="sub">${od?'需处理':'良好'}</div></div>
-  </div>`;
-  const act=ts.filter(t=>t.st!=='done').sort(pSort);
-  h+=act.length?tList(act,true):`<div class="empty"><div class="ei">✓</div><p>暂无待办</p></div>`;
-  $c(h);
-}
+function tList(ts,showP){return ts.map(t=>{const proj=showP?D.projects.find(p=>p.id===t.pid):null;const ov=t.ed&&t.ed<td()&&t.st!=='done';return`<div class="task-item${isAdmin?' editable':''}" ${isAdmin?`onclick="openTM('${t.id}')"`:''}><div class="task-check${t.st==='done'?' done':''}${isAdmin?' clickable':''}" ${isAdmin?`onclick="event.stopPropagation();tog('${t.id}')"`:''}>${t.st==='done'?'✓':''}</div><div class="task-body"><div class="task-title${t.st==='done'?' done':''}">${esc(t.title)}</div><div class="task-meta"><span class="tag p-${t.pr}">${{urgent:'紧急',high:'高',medium:'中',low:'低'}[t.pr]}</span>${t.st==='doing'?'<span class="tag" style="background:#f5f5f5;color:#666">进行中</span>':''}${t.ed?`<span class="task-date${ov?' overdue':''}">${ov?'⚠ ':''}${t.ed}</span>`:''}${proj?`<span class="task-proj">${esc(proj.name)}</span>`:''}</div></div></div>`}).join('')}
 
-function rProj(){
-  const p=D.projects.find(x=>x.id===curProj);
-  if(!p)return go('dashboard');
-  $('vt',p.name);$h('<span class="badge">只读</span>');
-  let ts=D.tasks.filter(t=>t.pid===p.id);
-  const cn={all:ts.length,todo:ts.filter(t=>t.st==='todo').length,doing:ts.filter(t=>t.st==='doing').length,done:ts.filter(t=>t.st==='done').length};
-  let h=`<div class="tabs">
-    ${['all','todo','doing','done'].map(f=>`<button class="tab${filter===f?' active':''}" onclick="filter='${f}';R()">${{all:'全部',todo:'待办',doing:'进行',done:'完成'}[f]} ${cn[f]}</button>`).join('')}
-  </div>`;
-  if(filter!=='all')ts=ts.filter(t=>t.st===filter);
-  ts.sort(pSort);
-  h+=ts.length?tList(ts,false):`<div class="empty"><div class="ei">☐</div><p>暂无任务</p></div>`;
-  if(p.desc){h+=`<div class="proj-info">${esc(p.desc)}</div>`}
-  $c(h);
-}
+// ===== TIMELINE =====
+function rTL(){$('vt','时间轴');$h('');let projects=tlScope==='all'?D.projects:D.projects.filter(p=>p.id===tlScope);let h=`<div class="tl-controls"><button class="btn btn-sm ${tlScope==='all'?'btn-primary':'btn-ghost'}" onclick="tlScope='all';rTL()">全部</button>`;D.projects.forEach(p=>{h+=`<button class="btn btn-sm ${tlScope===p.id?'btn-primary':'btn-ghost'}" onclick="tlScope='${p.id}';rTL()">${esc(p.name)}</button>`});h+=`</div>`;if(!projects.length){$c(h+`<div class="empty"><div class="ei">━</div><p>暂无项目</p></div>`);return}const allDates=[td()];projects.forEach(p=>{D.tasks.filter(t=>t.pid===p.id).forEach(t=>{if(t.sd)allDates.push(t.sd);if(t.ed)allDates.push(t.ed)})});allDates.sort();if(allDates.length<2){$c(h+`<div class="empty"><div class="ei">━</div><p>暂无时间数据</p></div>`);return}const gMin=new Date(allDates[0]),gMax=new Date(allDates[allDates.length-1]);gMin.setDate(gMin.getDate()-1);gMax.setDate(gMax.getDate()+1);const gSpan=Math.max((gMax-gMin)/(864e5),1);const pct=d=>{if(!d)return null;const v=(new Date(d)-gMin)/(864e5);return Math.max(0,Math.min(100,v/gSpan*100))};const todayPct=pct(td());const fmtD=d=>d?d.slice(5).replace('-','/'):'';h+=`<div class="tl-axis"><div class="tl-axis-bar"><span class="tl-axis-label">${fmtD(allDates[0])}</span><span class="tl-axis-label">${fmtD(allDates[allDates.length-1])}</span></div><div class="tl-axis-track">`;if(todayPct!==null)h+=`<div class="tl-today-mark" style="left:${todayPct}%"><span class="tl-today-label">今天</span></div>`;h+=`</div></div>`;projects.forEach(p=>{const tasks=D.tasks.filter(t=>t.pid===p.id).sort(pSort);const isC=tlCollapsed[p.id];const ac=tasks.filter(t=>t.st!=='done').length;h+=`<div class="tl-group"><div class="tl-proj-head" onclick="tlCollapsed['${p.id}']=!tlCollapsed['${p.id}'];rTL()"><span class="tl-proj-dot" style="background:${p.col}"></span><span class="tl-proj-name">${esc(p.name)}</span><span class="tl-proj-count">${ac} 进行中</span><span class="tl-proj-toggle${isC?' collapsed':''}">▾</span></div>`;h+=`<div class="tl-tasks${isC?' collapsed':''}" style="max-height:${isC?0:tasks.length*38+40}px">`;if(tasks.length){tasks.forEach(t=>{const tL=pct(t.sd),tR=pct(t.ed);const tW=(tL!==null&&tR!==null)?Math.max(tR-tL,.3):0;const ov=t.ed&&t.ed<td()&&t.st!=='done';const isDone=t.st==='done';let ds='';if(t.sd&&t.ed)ds=fmtD(t.sd)+' \u2192 '+fmtD(t.ed);else if(t.sd)ds=fmtD(t.sd)+' \u2192';else if(t.ed)ds='\u2192 '+fmtD(t.ed);h+=`<div class="tl-task-row"><span class="tl-task-dot" style="background:${p.col};opacity:${isDone?.3:.6}"></span><span class="tl-task-name${isDone?' done':''}">${esc(t.title)}</span><span class="tl-task-pri tag p-${t.pr}">${{urgent:'紧急',high:'高',medium:'中',low:'低'}[t.pr]}</span><div class="tl-task-bar-wrap"><div class="tl-task-bar-bg"></div>${tW?`<div class="tl-task-bar${isDone?' done-bar':''}" style="left:${tL}%;width:${tW}%;background:${p.col};opacity:${isDone?.25:.5}"></div>`:''}</div><span class="tl-task-dates${ov?' overdue':''}">${ov?'⚠ ':''}${ds||'—'}</span></div>`})}else{h+=`<div class="tl-no-tasks">暂无任务</div>`}h+=`</div></div>`});$c(h)}
 
-function tList(ts,showP){
-  return ts.map(t=>{
-    const proj=showP?D.projects.find(p=>p.id===t.pid):null;
-    const ov=t.ed&&t.ed<td()&&t.st!=='done';
-    return`<div class="task-item">
-      <div class="task-check${t.st==='done'?' done':''}">${t.st==='done'?'✓':''}</div>
-      <div class="task-body">
-        <div class="task-title${t.st==='done'?' done':''}">${esc(t.title)}</div>
-        <div class="task-meta">
-          <span class="tag p-${t.pr}">${{urgent:'紧急',high:'高',medium:'中',low:'低'}[t.pr]}</span>
-          ${t.st==='doing'?'<span class="tag" style="background:#f5f5f5;color:#666">进行中</span>':''}
-          ${t.ed?`<span class="task-date${ov?' overdue':''}">${ov?'⚠ ':''}${t.ed}</span>`:''}
-          ${proj?`<span class="task-proj">${esc(proj.name)}</span>`:''}
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function rTL(){
-  $('vt','时间轴');$h('<span class="badge">只读</span>');
-  let projects=tlScope==='all'?D.projects:D.projects.filter(p=>p.id===tlScope);
-  let h=`<div class="tl-controls">
-    <button class="btn btn-sm ${tlScope==='all'?'btn-primary':'btn-ghost'}" onclick="tlScope='all';rTL()">全部</button>`;
-  D.projects.forEach(p=>{h+=`<button class="btn btn-sm ${tlScope===p.id?'btn-primary':'btn-ghost'}" onclick="tlScope='${p.id}';rTL()">${esc(p.name)}</button>`});
+// ===== NOTES =====
+function rNotes(){$('vt','想法');$h('');let h='';
+if(isAdmin){
+  h+=`<div class="note-wizard">`;h+=`<div class="nw-step"><div class="nw-label"><span class="nw-step-num">1</span> 这个想法属于</div><div class="nw-options"><button class="nw-opt${nwType==='project'?' active':''}" onclick="nwSetType('project')">某个项目</button><button class="nw-opt${nwType==='free'?' active':''}" onclick="nwSetType('free')">自由灵感</button></div></div>`;
+  if(nwType){h+=`<div class="nw-connector"></div>`;if(nwType==='project'){h+=`<div class="nw-step"><div class="nw-label"><span class="nw-step-num">•</span> 选择项目</div><div class="nw-options">`;D.projects.forEach(p=>{h+=`<button class="nw-opt${nwProjId===p.id?' active':''}" onclick="nwSetProj('${p.id}')"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.col};margin-right:4px;vertical-align:middle"></span>${esc(p.name)}</button>`});if(!D.projects.length)h+=`<span style="font-size:12px;color:var(--text3)">请先创建项目</span>`;h+=`</div></div><div class="nw-connector"></div>`}
+  if(nwType==='free'||(nwType==='project'&&nwProjId)){h+=`<div class="nw-step"><div class="nw-label"><span class="nw-step-num">2</span> 想法内容</div><div class="nw-content"><textarea id="nwInput" placeholder="写下你的想法…">${esc(nwText)}</textarea></div></div><div class="nw-connector"></div>`;h+=`<div class="nw-step"><div class="nw-label"><span class="nw-step-num">3</span> 转为任务？</div><div class="nw-options"><button class="nw-opt${nwMakeTask===true?' active':''}" onclick="nwSetTask(true)">是，创建任务</button><button class="nw-opt${nwMakeTask===false?' active':''}" onclick="nwSetTask(false)">否，仅记录</button></div>`;if(nwMakeTask===true){const po=D.projects.map(p=>`<option value="${p.id}"${nwProjId===p.id?' selected':''}>${esc(p.name)}</option>`).join('');h+=`<div class="nw-task-form"><div class="fr"><div class="fg"><label>优先级</label><select id="nwPri"><option value="urgent">紧急</option><option value="high">高</option><option value="medium" selected>中</option><option value="low">低</option></select></div><div class="fg"><label>所属项目</label><select id="nwTProj">${po}</select></div></div><div class="fr"><div class="fg"><label>开始</label><input type="date" id="nwSD" value="${td()}"></div><div class="fg"><label>截止</label><input type="date" id="nwED"></div></div></div>`}h+=`</div>`;if(nwMakeTask!==null){h+=`<div class="nw-actions"><button class="btn btn-ghost" onclick="nwReset()">重置</button><button class="btn btn-primary" onclick="nwSave()">保存</button></div>`}}}
   h+=`</div>`;
-  if(!projects.length){$c(h+`<div class="empty"><div class="ei">━</div><p>暂无项目</p></div>`);return}
-  const allDates=[td()];
-  projects.forEach(p=>{D.tasks.filter(t=>t.pid===p.id).forEach(t=>{if(t.sd)allDates.push(t.sd);if(t.ed)allDates.push(t.ed)})});
-  allDates.sort();
-  if(allDates.length<2){$c(h+`<div class="empty"><div class="ei">━</div><p>暂无时间数据</p></div>`);return}
-  const gMin=new Date(allDates[0]),gMax=new Date(allDates[allDates.length-1]);
-  gMin.setDate(gMin.getDate()-1);gMax.setDate(gMax.getDate()+1);
-  const gSpan=Math.max((gMax-gMin)/(864e5),1);
-  const pct=d=>{if(!d)return null;const v=(new Date(d)-gMin)/(864e5);return Math.max(0,Math.min(100,v/gSpan*100))};
-  const todayPct=pct(td());
-  const fmtD=d=>d?d.slice(5).replace('-','/'):'';
-  h+=`<div class="tl-axis"><div class="tl-axis-bar"><span class="tl-axis-label">${fmtD(allDates[0])}</span><span class="tl-axis-label">${fmtD(allDates[allDates.length-1])}</span></div><div class="tl-axis-track">`;
-  if(todayPct!==null)h+=`<div class="tl-today-mark" style="left:${todayPct}%"><span class="tl-today-label">今天</span></div>`;
-  h+=`</div></div>`;
-  projects.forEach(p=>{
-    const tasks=D.tasks.filter(t=>t.pid===p.id).sort(pSort);
-    const isC=tlCollapsed[p.id];
-    const ac=tasks.filter(t=>t.st!=='done').length;
-    h+=`<div class="tl-group"><div class="tl-proj-head" onclick="tlCollapsed['${p.id}']=!tlCollapsed['${p.id}'];rTL()">
-      <span class="tl-proj-dot" style="background:${p.col}"></span><span class="tl-proj-name">${esc(p.name)}</span>
-      <span class="tl-proj-count">${ac} 进行中</span><span class="tl-proj-toggle${isC?' collapsed':''}">▾</span></div>`;
-    h+=`<div class="tl-tasks${isC?' collapsed':''}" style="max-height:${isC?0:tasks.length*38+40}px">`;
-    if(tasks.length){tasks.forEach(t=>{
-      const tL=pct(t.sd),tR=pct(t.ed);const tW=(tL!==null&&tR!==null)?Math.max(tR-tL,.3):0;
-      const ov=t.ed&&t.ed<td()&&t.st!=='done';const isDone=t.st==='done';
-      let ds='';if(t.sd&&t.ed)ds=fmtD(t.sd)+' → '+fmtD(t.ed);else if(t.sd)ds=fmtD(t.sd)+' →';else if(t.ed)ds='→ '+fmtD(t.ed);
-      h+=`<div class="tl-task-row"><span class="tl-task-dot" style="background:${p.col};opacity:${isDone?.3:.6}"></span>
-        <span class="tl-task-name${isDone?' done':''}">${esc(t.title)}</span>
-        <span class="tl-task-pri tag p-${t.pr}">${{urgent:'紧急',high:'高',medium:'中',low:'低'}[t.pr]}</span>
-        <div class="tl-task-bar-wrap"><div class="tl-task-bar-bg"></div>${tW?`<div class="tl-task-bar${isDone?' done-bar':''}" style="left:${tL}%;width:${tW}%;background:${p.col};opacity:${isDone?.25:.5}"></div>`:''}</div>
-        <span class="tl-task-dates${ov?' overdue':''}">${ov?'⚠ ':''}${ds||'—'}</span></div>`;
-    })}else{h+=`<div class="tl-no-tasks">暂无任务</div>`}
-    h+=`</div></div>`;
-  });
-  $c(h);
 }
+if(D.notes.length){h+=`<div class="sec-head" style="margin-top:8px">${isAdmin?'历史记录':'想法记录'}</div>`;[...D.notes].sort((a,b)=>b.ct.localeCompare(a.ct)).forEach(n=>{const proj=n.pid?D.projects.find(p=>p.id===n.pid):null;h+=`<div class="note"><div class="note-text">${esc(n.txt)}</div><div class="note-tags">${n.type==='free'?'<span class="note-tag">灵感</span>':''}${proj?`<span class="note-tag" style="border-left:2px solid ${proj.col};padding-left:6px">${esc(proj.name)}</span>`:''}${n.taskId?'<span class="note-tag">已转任务</span>':''}</div><div class="note-foot"><span>${fmt(n.ct)}</span>${isAdmin?`<button onclick="delN('${n.id}')">删除</button>`:''}</div></div>`})}else if(!isAdmin){h+=`<div class="empty"><div class="ei">✎</div><p>暂无想法记录</p></div>`}
+$c(h)}
 
-function rNotes(){
-  $('vt','想法');$h('<span class="badge">只读</span>');
-  let h='';
-  if(D.notes.length){
-    [...D.notes].sort((a,b)=>b.ct.localeCompare(a.ct)).forEach(n=>{
-      const proj=n.pid?D.projects.find(p=>p.id===n.pid):null;
-      h+=`<div class="note"><div class="note-text">${esc(n.txt)}</div><div class="note-tags">
-        ${n.type==='free'?'<span class="note-tag">灵感</span>':''}
-        ${proj?`<span class="note-tag" style="border-left:2px solid ${proj.col};padding-left:6px">${esc(proj.name)}</span>`:''}
-        ${n.taskId?'<span class="note-tag">已转任务</span>':''}</div>
-        <div class="note-foot"><span>${fmt(n.ct)}</span></div></div>`;
-    });
-  }else{h+=`<div class="empty"><div class="ei">✎</div><p>暂无想法记录</p></div>`}
-  $c(h);
-}
+function nwSetType(t){nwType=t;nwProjId=null;nwMakeTask=null;nwStep=1;rNotes()}
+function nwSetProj(pid){nwProjId=pid;nwStep=2;rNotes()}
+function nwSetTask(v){const el=document.getElementById('nwInput');if(el)nwText=el.value;nwMakeTask=v;rNotes()}
+function nwReset(){nwStep=1;nwType=null;nwProjId=null;nwText='';nwMakeTask=null;rNotes()}
+function nwSave(){const el=document.getElementById('nwInput');if(el)nwText=el.value;const txt=nwText.trim();if(!txt){toast('请输入想法内容');return}if(nwType==='project'&&!nwProjId){toast('请选择所属项目');return}const note={id:uid(),txt,type:nwType,pid:nwProjId||null,ct:new Date().toISOString(),taskId:null};if(nwMakeTask){const projId=document.getElementById('nwTProj')?.value||(nwProjId||D.projects[0]?.id);if(!projId){toast('请先创建一个项目');return}const task={id:uid(),title:txt.length>40?txt.slice(0,40)+'\u2026':txt,desc:txt,pid:projId,pr:document.getElementById('nwPri')?.value||'medium',st:'todo',sd:document.getElementById('nwSD')?.value||td(),ed:document.getElementById('nwED')?.value||'',ct:new Date().toISOString()};D.tasks.push(task);note.taskId=task.id;toast('想法已保存，任务已创建')}else{toast('想法已保存')}D.notes.push(note);sbSave();nwReset()}
+function delN(nid){D.notes=D.notes.filter(n=>n.id!==nid);sbSave();rNotes()}
 
+// ===== PROJECT =====
+function renderColorPicker(sel){document.getElementById('cpicker').innerHTML=COLORS.map(c=>`<div class="color-swatch${c.v===sel?' active':''}" style="background:${c.v}" title="${c.n}" onclick="pickColor('${c.v}')"></div>`).join('')}
+function pickColor(c){selColor=c;renderColorPicker(c)}
+function openPM(pid){if(!isAdmin)return;editP=pid?D.projects.find(p=>p.id===pid):null;$('pmt',editP?'编辑项目':'新建项目');document.getElementById('psb').textContent=editP?'保存':'创建';document.getElementById('pdel').style.display=editP?'inline-flex':'none';document.getElementById('pn').value=editP?editP.name:'';document.getElementById('pd').value=editP?(editP.desc||''):'';selColor=editP?(editP.col||'#111'):'#111';om('pm');renderColorPicker(selColor);setTimeout(()=>document.getElementById('pn').focus(),100)}
+function saveP(){const name=document.getElementById('pn').value.trim();if(!name){toast('请输入项目名称');return}const o={name,desc:document.getElementById('pd').value.trim(),col:selColor};if(editP)Object.assign(editP,o);else{o.id=uid();o.ct=new Date().toISOString();D.projects.push(o);curProj=o.id;view='project'}sbSave();cm('pm');R();toast(editP?'项目已保存':'项目已创建')}
+function delProj(){if(!editP||!confirm('确认删除项目及其所有任务？'))return;D.projects=D.projects.filter(p=>p.id!==editP.id);D.tasks=D.tasks.filter(t=>t.pid!==editP.id);sbSave();cm('pm');go('dashboard');toast('项目已删除')}
+
+// ===== TASK =====
+function openTM(tid,defP){if(!isAdmin)return;editT=tid?D.tasks.find(t=>t.id===tid):null;const sel=document.getElementById('tp');sel.innerHTML=D.projects.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');if(!D.projects.length){sel.innerHTML='<option value="">请先创建项目</option>';toast('请先创建一个项目');if(!tid)return}$('tmt',editT?'编辑任务':'新建任务');document.getElementById('tsb').textContent=editT?'保存':'创建';document.getElementById('tdb').style.display=editT?'inline-flex':'none';document.getElementById('tt').value=editT?editT.title:'';document.getElementById('td').value=editT?(editT.desc||''):'';document.getElementById('tp').value=editT?editT.pid:(defP||D.projects[0]?.id||'');document.getElementById('tpr').value=editT?editT.pr:'medium';document.getElementById('ts').value=editT?editT.st:'todo';document.getElementById('tsd').value=editT?(editT.sd||''):td();document.getElementById('ted').value=editT?(editT.ed||''):'';om('tm');setTimeout(()=>document.getElementById('tt').focus(),100)}
+function saveT(){const title=document.getElementById('tt').value.trim();const pid=document.getElementById('tp').value;if(!title){toast('请输入任务标题');return}if(!pid){toast('请选择所属项目');return}const o={title,desc:document.getElementById('td').value.trim(),pid,pr:document.getElementById('tpr').value,st:document.getElementById('ts').value,sd:document.getElementById('tsd').value,ed:document.getElementById('ted').value};if(editT)Object.assign(editT,o);else{o.id=uid();o.ct=new Date().toISOString();D.tasks.push(o)}sbSave();cm('tm');R();toast(editT?'任务已保存':'任务已创建')}
+function delTask(){if(!editT||!confirm('确认删除？'))return;D.tasks=D.tasks.filter(t=>t.id!==editT.id);sbSave();cm('tm');R();toast('任务已删除')}
+function tog(tid){if(!isAdmin)return;const t=D.tasks.find(x=>x.id===tid);if(!t)return;t.st=t.st==='done'?'todo':'done';sbSave();R()}
+function qAdd(e,pid){if(e.key!=='Enter'||!isAdmin)return;const el=document.getElementById('qi');const v=el.value.trim();if(!v)return;D.tasks.push({id:uid(),title:v,pid,pr:'medium',st:'todo',sd:td(),ed:'',desc:'',ct:new Date().toISOString()});sbSave();el.value='';R();toast('任务已添加');setTimeout(()=>{const e=document.getElementById('qi');if(e)e.focus()},30)}
+
+// ===== UTIL =====
 function pSort(a,b){return po(a.pr)-po(b.pr)}
 function po(p){return{urgent:0,high:1,medium:2,low:3}[p]||2}
 function fmt(iso){const d=new Date(iso);return`${d.getMonth()+1}-${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
 function $(i,v){document.getElementById(i).textContent=v}
 function $h(v){document.getElementById('hr').innerHTML=v}
 function $c(v){document.getElementById('mc').innerHTML=v}
+function om(i){document.getElementById(i).classList.add('show')}
+function cm(i){document.getElementById(i).classList.remove('show')}
+document.querySelectorAll('.modal-bg').forEach(el=>{el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('show')})});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-bg.show').forEach(el=>el.classList.remove('show'))});
 
-loadData();
+// ===== INIT =====
+async function init(){
+  checkAdmin();
+  rFooter();
+  $c('<div class="empty"><p>加载中…</p></div>');
+  D=await sbLoad();
+  R();
+}
+init();
 </script>
 </body>
 </html>
