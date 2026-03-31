@@ -191,6 +191,29 @@ textarea{resize:vertical}
 .proj-info{margin-top:20px;padding-top:14px;border-top:1px solid var(--border);font-size:12px;color:var(--text3)}
 .saving-indicator{position:fixed;bottom:16px;right:16px;font-size:11px;color:var(--text3);background:var(--bg2);border:1px solid var(--border);padding:4px 12px;border-radius:var(--radius);box-shadow:var(--shadow);opacity:0;transition:opacity .2s;z-index:50}
 .saving-indicator.show{opacity:1}
+
+/* Knowledge */
+.kb-add{display:flex;gap:8px;margin-bottom:16px}
+.kb-add input{flex:1}
+.kb-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:8px;transition:var(--tr)}
+.kb-card:hover{box-shadow:var(--shadow)}
+.kb-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.kb-card-title{font-size:13.5px;font-weight:600;flex:1;cursor:default}
+.kb-card-title.editable{cursor:pointer}
+.kb-card-status{font-size:9.5px;padding:2px 8px;border-radius:8px;font-weight:600;flex-shrink:0}
+.kb-status-want{background:var(--bg3);color:var(--text3)}
+.kb-status-learning{background:#111;color:#fff}
+.kb-status-done{background:var(--bg4);color:var(--text3)}
+.kb-card-tags{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.kb-tag{font-size:9.5px;padding:1px 7px;border-radius:3px;background:var(--bg3);color:var(--text3)}
+.kb-card-body{margin-top:8px;font-size:12.5px;color:var(--text2);line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.kb-card-foot{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:10.5px;color:var(--text3)}
+.kb-card-foot button{font-size:10.5px;color:var(--text3);padding:2px 6px;border-radius:3px}
+.kb-card-foot button:hover{background:var(--bg3);color:var(--text)}
+.kb-filter{display:flex;gap:1px;margin-bottom:14px;background:var(--bg3);border-radius:var(--radius);padding:2px;width:fit-content}
+.kb-filter button{padding:5px 12px;font-size:11.5px;border-radius:4px;color:var(--text2);transition:var(--tr)}
+.kb-filter button:hover{color:var(--text)}
+.kb-filter button.active{background:var(--bg2);color:var(--text);font-weight:500;box-shadow:var(--shadow)}
 </style>
 </head>
 <body>
@@ -201,6 +224,7 @@ textarea{resize:vertical}
       <div class="nav-item active" data-v="dashboard" onclick="go('dashboard')"><span class="nav-icon">◉</span>总览</div>
       <div class="nav-item" data-v="timeline" onclick="go('timeline')"><span class="nav-icon">━</span>时间轴</div>
       <div class="nav-item" data-v="notes" onclick="go('notes')"><span class="nav-icon">✎</span>想法</div>
+      <div class="nav-item" data-v="knowledge" onclick="go('knowledge')"><span class="nav-icon">◈</span>知识</div>
     </div>
     <div class="divider"></div>
     <div class="section-label">项目</div>
@@ -265,6 +289,30 @@ textarea{resize:vertical}
   </div>
 </div></div>
 
+<!-- Knowledge Modal -->
+<div class="modal-bg" id="km"><div class="modal">
+  <div class="modal-head"><h3 id="kmt">添加知识</h3><button class="btn-icon" onclick="cm('km')">✕</button></div>
+  <div class="modal-body">
+    <div class="fg"><label>标题</label><input id="kTitle" placeholder="要学什么？"></div>
+    <div class="fg"><label>内容/笔记</label><textarea id="kBody" rows="4" placeholder="知识要点、学习笔记、参考链接…"></textarea></div>
+    <div class="fr">
+      <div class="fg"><label>分类标签</label><input id="kTags" placeholder="用逗号分隔，如：产品,设计"></div>
+      <div class="fg"><label>学习状态</label>
+        <select id="kStatus">
+          <option value="want">想学</option>
+          <option value="learning">学习中</option>
+          <option value="done">已掌握</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn btn-danger" id="kdel" style="margin-right:auto;display:none" onclick="delKB()">删除</button>
+    <button class="btn btn-ghost" onclick="cm('km')">取消</button>
+    <button class="btn btn-primary" id="ksb" onclick="saveKB()">添加</button>
+  </div>
+</div></div>
+
 <script>
 // ===== CONFIG =====
 const SB_URL='https://pugnszrucysnnmbvevaa.supabase.co';
@@ -278,7 +326,7 @@ async function sbLoad(){
   try{
     const r=await fetch(SB_URL+'/rest/v1/workspace_data?id=eq.main&select=data',{headers:sbHeaders});
     const rows=await r.json();
-    if(rows.length&&rows[0].data)return rows[0].data;
+    if(rows.length&&rows[0].data){const d=rows[0].data;if(!d.knowledge)d.knowledge=[];return d}
   }catch(e){console.error('Load error',e)}
   return {projects:[],tasks:[],notes:[]};
 }
@@ -299,7 +347,7 @@ function sbSave(){
 }
 
 // ===== DATA =====
-let D={projects:[],tasks:[],notes:[]};
+let D={projects:[],tasks:[],notes:[],knowledge:[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const td=()=>new Date().toISOString().slice(0,10);
 const esc=s=>s?s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):'';
@@ -330,14 +378,14 @@ function rFooter(){
 }
 
 // ===== STATE =====
-let view='dashboard',curProj=null,editP=null,editT=null,tlScope='all',filter='all';
+let view='dashboard',curProj=null,editP=null,editT=null,editK=null,tlScope='all',filter='all',kbFilter='all';
 let nwStep=1,nwType=null,nwProjId=null,nwText='',nwMakeTask=null;
 let tlCollapsed={};
 
-function go(v,pid){view=v;curProj=pid||null;filter='all';nwStep=1;nwType=null;nwProjId=null;nwText='';nwMakeTask=null;
+function go(v,pid){view=v;curProj=pid||null;filter='all';kbFilter='all';nwStep=1;nwType=null;nwProjId=null;nwText='';nwMakeTask=null;
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.v===v&&!pid));
   document.querySelectorAll('.project-item').forEach(n=>n.classList.toggle('active',n.dataset.id===pid));R()}
-function R(){rPL();({dashboard:rDash,project:rProj,timeline:rTL,notes:rNotes})[view]?.()}
+function R(){rPL();({dashboard:rDash,project:rProj,timeline:rTL,notes:rNotes,knowledge:rKB})[view]?.()}
 function rPL(){document.getElementById('pl').innerHTML=D.projects.map(p=>{const c=D.tasks.filter(t=>t.pid===p.id&&t.st!=='done').length;return`<div class="project-item${curProj===p.id?' active':''}" data-id="${p.id}" onclick="go('project','${p.id}')"><span class="project-dot" style="background:${p.col}"></span><span class="project-name">${esc(p.name)}</span>${c?`<span class="project-count">${c}</span>`:''}</div>`}).join('')}
 
 // ===== DASHBOARD =====
@@ -368,6 +416,71 @@ function nwSetTask(v){const el=document.getElementById('nwInput');if(el)nwText=e
 function nwReset(){nwStep=1;nwType=null;nwProjId=null;nwText='';nwMakeTask=null;rNotes()}
 function nwSave(){const el=document.getElementById('nwInput');if(el)nwText=el.value;const txt=nwText.trim();if(!txt){toast('请输入想法内容');return}if(nwType==='project'&&!nwProjId){toast('请选择所属项目');return}const note={id:uid(),txt,type:nwType,pid:nwProjId||null,ct:new Date().toISOString(),taskId:null};if(nwMakeTask){const projId=document.getElementById('nwTProj')?.value||(nwProjId||D.projects[0]?.id);if(!projId){toast('请先创建一个项目');return}const task={id:uid(),title:txt.length>40?txt.slice(0,40)+'\u2026':txt,desc:txt,pid:projId,pr:document.getElementById('nwPri')?.value||'medium',st:'todo',sd:document.getElementById('nwSD')?.value||td(),ed:document.getElementById('nwED')?.value||'',ct:new Date().toISOString()};D.tasks.push(task);note.taskId=task.id;toast('想法已保存，任务已创建')}else{toast('想法已保存')}D.notes.push(note);sbSave();nwReset()}
 function delN(nid){D.notes=D.notes.filter(n=>n.id!==nid);sbSave();rNotes()}
+
+// ===== KNOWLEDGE =====
+function rKB(){
+  $('vt','知识');$h(isAdmin?`<button class="btn btn-primary" onclick="openKM()">+ 添加</button>`:'');
+  const kb=D.knowledge||[];
+  const cn={all:kb.length,want:kb.filter(k=>k.st==='want').length,learning:kb.filter(k=>k.st==='learning').length,done:kb.filter(k=>k.st==='done').length};
+  let h=`<div class="kb-filter">
+    ${['all','want','learning','done'].map(f=>`<button class="${f===kbFilter?'active':''}" onclick="kbFilter='${f}';rKB()">${{all:'全部',want:'想学',learning:'学习中',done:'已掌握'}[f]} ${cn[f]}</button>`).join('')}
+  </div>`;
+  let items=kbFilter==='all'?[...kb]:kb.filter(k=>k.st===kbFilter);
+  items.sort((a,b)=>{const o={learning:0,want:1,done:2};return(o[a.st]||1)-(o[b.st]||1)});
+  if(items.length){
+    items.forEach(k=>{
+      const stLabel={want:'想学',learning:'学习中',done:'已掌握'}[k.st];
+      const stCls={want:'kb-status-want',learning:'kb-status-learning',done:'kb-status-done'}[k.st];
+      const tags=(k.tags||[]).filter(Boolean);
+      h+=`<div class="kb-card">
+        <div class="kb-card-head">
+          <div class="kb-card-title${isAdmin?' editable':''}" ${isAdmin?`onclick="openKM('${k.id}')"`:''}>${esc(k.title)}</div>
+          <span class="kb-card-status ${stCls}">${stLabel}</span>
+        </div>
+        ${tags.length?`<div class="kb-card-tags">${tags.map(t=>`<span class="kb-tag">${esc(t)}</span>`).join('')}</div>`:''}
+        ${k.body?`<div class="kb-card-body">${esc(k.body)}</div>`:''}
+        <div class="kb-card-foot">
+          <span>${fmt(k.ct)}</span>
+          ${isAdmin?`<button onclick="openKM('${k.id}')">编辑</button>`:''}
+        </div>
+      </div>`;
+    });
+  }else{
+    h+=`<div class="empty"><div class="ei">◈</div><p>${kbFilter==='all'?'开始构建你的知识库':'该分类暂无内容'}</p>${isAdmin&&kbFilter==='all'?'<button class="btn btn-primary" onclick="openKM()">添加第一条</button>':''}</div>`;
+  }
+  $c(h);
+}
+
+function openKM(kid){
+  if(!isAdmin)return;
+  editK=kid?(D.knowledge||[]).find(k=>k.id===kid):null;
+  $('kmt',editK?'编辑知识':'添加知识');
+  document.getElementById('ksb').textContent=editK?'保存':'添加';
+  document.getElementById('kdel').style.display=editK?'inline-flex':'none';
+  document.getElementById('kTitle').value=editK?editK.title:'';
+  document.getElementById('kBody').value=editK?(editK.body||''):'';
+  document.getElementById('kTags').value=editK?(editK.tags||[]).join(', '):'';
+  document.getElementById('kStatus').value=editK?editK.st:'want';
+  om('km');
+  setTimeout(()=>document.getElementById('kTitle').focus(),100);
+}
+
+function saveKB(){
+  const title=document.getElementById('kTitle').value.trim();
+  if(!title){toast('请输入知识标题');return}
+  if(!D.knowledge)D.knowledge=[];
+  const tags=document.getElementById('kTags').value.split(/[,，]/).map(s=>s.trim()).filter(Boolean);
+  const o={title,body:document.getElementById('kBody').value.trim(),tags,st:document.getElementById('kStatus').value};
+  if(editK)Object.assign(editK,o);
+  else{o.id=uid();o.ct=new Date().toISOString();D.knowledge.push(o)}
+  sbSave();cm('km');R();toast(editK?'知识已保存':'知识已添加');
+}
+
+function delKB(){
+  if(!editK||!confirm('确认删除？'))return;
+  D.knowledge=D.knowledge.filter(k=>k.id!==editK.id);
+  sbSave();cm('km');R();toast('知识已删除');
+}
 
 // ===== PROJECT =====
 function renderColorPicker(sel){document.getElementById('cpicker').innerHTML=COLORS.map(c=>`<div class="color-swatch${c.v===sel?' active':''}" style="background:${c.v}" title="${c.n}" onclick="pickColor('${c.v}')"></div>`).join('')}
