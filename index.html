@@ -196,32 +196,23 @@ textarea{resize:vertical}
 .kb-list{display:flex;flex-direction:column;gap:6px}
 .kb-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;transition:var(--tr);cursor:pointer}
 .kb-card:hover{box-shadow:var(--shadow);border-color:var(--border2)}
-.kb-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.kb-card-title{font-size:13.5px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.kb-card-status{font-size:9.5px;padding:2px 8px;border-radius:8px;font-weight:600;flex-shrink:0}
-.kb-status-want{background:var(--bg3);color:var(--text3)}
-.kb-status-learning{background:#111;color:#fff}
-.kb-status-done{background:var(--bg4);color:var(--text3)}
+.kb-card-title{font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .kb-card-preview{font-size:12px;color:var(--text3);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .kb-card-tags{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
 .kb-tag{font-size:9.5px;padding:1px 7px;border-radius:3px;background:var(--bg3);color:var(--text3)}
 .kb-card-foot{font-size:10px;color:var(--text3);margin-top:6px}
-.kb-filter{display:flex;gap:1px;margin-bottom:14px;background:var(--bg3);border-radius:var(--radius);padding:2px;width:fit-content}
-.kb-filter button{padding:5px 12px;font-size:11.5px;border-radius:4px;color:var(--text2);transition:var(--tr)}
-.kb-filter button:hover{color:var(--text)}
-.kb-filter button.active{background:var(--bg2);color:var(--text);font-weight:500;box-shadow:var(--shadow)}
 /* Knowledge editor — full area */
 .kb-editor{display:flex;flex-direction:column;height:100%}
-.kb-editor-topbar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
-.kb-editor-topbar input{flex:1;font-size:16px;font-weight:600;border:none;padding:4px 0;background:transparent;min-width:100px}
+.kb-editor-topbar{margin-bottom:8px}
+.kb-editor-topbar input{width:100%;font-size:18px;font-weight:600;border:none;padding:0;background:transparent;line-height:1.4}
 .kb-editor-topbar input:focus{outline:none}
-.kb-editor-topbar input::placeholder{color:var(--border2)}
+.kb-editor-topbar input::placeholder{color:var(--text3)}
 .kb-editor-meta{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
-.kb-editor-meta select,.kb-editor-meta input{width:auto;font-size:12px;padding:4px 8px}
+.kb-editor-meta input{width:auto;font-size:12px;padding:4px 8px}
 .kb-editor-meta .fg-inline{display:flex;align-items:center;gap:4px}
 .kb-editor-meta .fg-inline label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;white-space:nowrap;margin:0}
-.kb-editor-body{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px;min-height:300px;font-size:13.5px;line-height:1.8;overflow-y:auto;outline:none;color:var(--text)}
-.kb-editor-body:empty::before{content:attr(data-placeholder);color:var(--text3)}
+.kb-editor-body{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px;min-height:300px;font-size:13.5px;line-height:1.8;overflow-y:auto;outline:none;color:var(--text);position:relative}
+.kb-editor-body:empty::before{content:attr(data-placeholder);color:var(--text3);pointer-events:none;white-space:pre-wrap;display:block}
 .kb-editor-body img{max-width:100%;border-radius:var(--radius);margin:8px 0;display:block}
 .kb-editor-body[contenteditable="false"]{cursor:default}
 .kb-editor-toolbar{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap}
@@ -369,11 +360,11 @@ function rFooter(){
 }
 
 // ===== STATE =====
-let view='dashboard',curProj=null,editP=null,editT=null,editK=null,tlScope='all',filter='all',kbFilter='all';
+let view='dashboard',curProj=null,editP=null,editT=null,editK=null,tlScope='all',filter='all';
 let nwStep=1,nwType=null,nwProjId=null,nwText='',nwMakeTask=null;
 let tlCollapsed={};
 
-function go(v,pid){view=v;curProj=pid||null;filter='all';kbFilter='all';nwStep=1;nwType=null;nwProjId=null;nwText='';nwMakeTask=null;
+function go(v,pid){view=v;curProj=pid||null;filter='all';nwStep=1;nwType=null;nwProjId=null;nwText='';nwMakeTask=null;kbEditing=null;
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.v===v&&!pid));
   document.querySelectorAll('.project-item').forEach(n=>n.classList.toggle('active',n.dataset.id===pid));R()}
 function R(){rPL();({dashboard:rDash,project:rProj,timeline:rTL,notes:rNotes,knowledge:rKB})[view]?.()}
@@ -415,29 +406,23 @@ function rKB(){
   if(kbEditing){rKBEditor();return}
   $('vt','知识');$h(isAdmin?`<button class="btn btn-primary" onclick="kbNew()">+ 新建</button>`:'');
   const kb=D.knowledge||[];
-  const cn={all:kb.length,want:kb.filter(k=>k.st==='want').length,learning:kb.filter(k=>k.st==='learning').length,done:kb.filter(k=>k.st==='done').length};
-  let h=`<div class="kb-filter">
-    ${['all','want','learning','done'].map(f=>`<button class="${f===kbFilter?'active':''}" onclick="kbFilter='${f}';rKB()">${{all:'全部',want:'想学',learning:'学习中',done:'已掌握'}[f]} ${cn[f]}</button>`).join('')}
-  </div><div class="kb-list">`;
-  let items=kbFilter==='all'?[...kb]:kb.filter(k=>k.st===kbFilter);
-  items.sort((a,b)=>{const o={learning:0,want:1,done:2};return(o[a.st]||1)-(o[b.st]||1)});
+  let h=`<div class="kb-list">`;
+  let items=[...kb];
+  items.sort((a,b)=>b.ct.localeCompare(a.ct));
   if(items.length){
     items.forEach(k=>{
-      const stLabel={want:'想学',learning:'学习中',done:'已掌握'}[k.st];
-      const stCls={want:'kb-status-want',learning:'kb-status-learning',done:'kb-status-done'}[k.st];
       const tags=(k.tags||[]).filter(Boolean);
-      // Extract plain text preview from HTML body
       const tmp=document.createElement('div');tmp.innerHTML=k.body||'';
       const preview=tmp.textContent.slice(0,80);
       h+=`<div class="kb-card" onclick="kbOpen('${k.id}')">
-        <div class="kb-card-head"><span class="kb-card-title">${esc(k.title)}</span><span class="kb-card-status ${stCls}">${stLabel}</span></div>
+        <div class="kb-card-title">${esc(k.title)}</div>
         ${preview?`<div class="kb-card-preview">${esc(preview)}</div>`:''}
         ${tags.length?`<div class="kb-card-tags">${tags.map(t=>`<span class="kb-tag">${esc(t)}</span>`).join('')}</div>`:''}
         <div class="kb-card-foot">${fmt(k.ct)}</div>
       </div>`;
     });
   }else{
-    h+=`<div class="empty"><div class="ei">◈</div><p>${kbFilter==='all'?'开始构建你的知识库':'该分类暂无内容'}</p>${isAdmin&&kbFilter==='all'?'<button class="btn btn-primary" onclick="kbNew()">添加第一条</button>':''}</div>`;
+    h+=`<div class="empty"><div class="ei">◈</div><p>开始构建你的知识库</p>${isAdmin?'<button class="btn btn-primary" onclick="kbNew()">添加第一条</button>':''}</div>`;
   }
   h+=`</div>`;
   $c(h);
@@ -459,19 +444,13 @@ function rKBEditor(){
   const title=k?k.title:'';
   const body=k?k.body:'';
   const tags=k?(k.tags||[]).join(', '):'';
-  const st=k?k.st:'want';
   
   let h=`<div class="kb-editor">
     <div class="kb-editor-topbar">
-      <input id="kbTitle" placeholder="标题" value="${esc(title)}" ${editable?'':'readonly'} style="${editable?'':'color:var(--text)'}" onchange="kbAutoSave()">
+      <input id="kbTitle" placeholder="标题" value="${esc(title)}" ${editable?'':'readonly'} onchange="kbAutoSave()">
     </div>
     <div class="kb-editor-meta">
-      <div class="fg-inline"><label>状态</label><select id="kbSt" onchange="kbAutoSave()" ${editable?'':'disabled'}>
-        <option value="want"${st==='want'?' selected':''}>想学</option>
-        <option value="learning"${st==='learning'?' selected':''}>学习中</option>
-        <option value="done"${st==='done'?' selected':''}>已掌握</option>
-      </select></div>
-      <div class="fg-inline"><label>标签</label><input id="kbTags" placeholder="逗号分隔" value="${esc(tags)}" style="width:200px" ${editable?'':'readonly'} onchange="kbAutoSave()"></div>
+      <div class="fg-inline"><label>标签</label><input id="kbTags" placeholder="逗号分隔，如：产品, 设计" value="${esc(tags)}" style="width:240px" ${editable?'':'readonly'} onchange="kbAutoSave()"></div>
     </div>`;
   
   if(editable){
@@ -562,15 +541,14 @@ function kbAutoSave(){
     if(!D.knowledge)D.knowledge=[];
     const body=document.getElementById('kbBody')?.innerHTML||'';
     const tags=(document.getElementById('kbTags')?.value||'').split(/[,，]/).map(s=>s.trim()).filter(Boolean);
-    const st=document.getElementById('kbSt')?.value||'want';
     
     if(kbEditing==='new'){
-      const nk={id:uid(),title,body,tags,st,ct:new Date().toISOString()};
+      const nk={id:uid(),title,body,tags,ct:new Date().toISOString()};
       D.knowledge.push(nk);
       kbEditing=nk.id; // switch from 'new' to actual id
     }else{
       const k=D.knowledge.find(x=>x.id===kbEditing);
-      if(k){k.title=title;k.body=body;k.tags=tags;k.st=st}
+      if(k){k.title=title;k.body=body;k.tags=tags}
     }
     sbSave();
   },800);
