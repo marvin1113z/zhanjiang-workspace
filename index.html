@@ -224,6 +224,13 @@ textarea{resize:vertical}
 .kb-editor-toolbar button:hover{background:var(--bg3);color:var(--text)}
 .kb-editor-foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
 .kb-img-upload{display:none}
+/* Mode toggle switch */
+.kb-mode-switch{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text3)}
+.kb-mode-switch .switch{position:relative;width:36px;height:20px;background:var(--bg4);border-radius:10px;cursor:pointer;transition:var(--tr)}
+.kb-mode-switch .switch.on{background:var(--accent)}
+.kb-mode-switch .switch::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:var(--tr);box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.kb-mode-switch .switch.on::after{left:18px}
+.kb-mode-switch .mode-label{font-weight:500;color:var(--text2)}
 </style>
 </head>
 <body>
@@ -442,58 +449,156 @@ function rKBEditor(){
   if(!isNew&&!k){kbBack();return}
   
   $('vt',isNew?'新建知识':esc(k.title));
-  $h(`<button class="btn btn-ghost btn-sm" onclick="kbBack()">← 返回</button>${isAdmin&&!isNew?`<button class="btn btn-danger btn-sm" onclick="kbDel('${k.id}')">删除</button>`:''}`);
+  $h(`<button class="btn btn-ghost btn-sm" onclick="kbBack()">\u2190 返回</button>${isAdmin&&!isNew?`<button class="btn btn-danger btn-sm" onclick="kbDel('${k.id}')">删除</button>`:''}`);
   
-  const editable=isAdmin;
   const title=k?k.title:'';
   const body=k?k.body:'';
   const tags=k?(k.tags||[]).join(', '):'';
+  // Default: admin=edit mode, non-admin=view mode
+  const inEdit=isAdmin&&kbEditMode;
   
-  let h=`<div class="kb-editor">
-    <div class="kb-editor-topbar">
-      <input id="kbTitle" placeholder="标题" value="${esc(title)}" ${editable?'':'readonly'} onchange="kbAutoSave()">
-    </div>
-    <div class="kb-editor-meta">
-      <div class="fg-inline"><label>标签</label><input id="kbTags" placeholder="逗号分隔，如：产品, 设计" value="${esc(tags)}" style="width:240px" ${editable?'':'readonly'} onchange="kbAutoSave()"></div>
+  let h=`<div class="kb-editor">`;
+  
+  // Top bar: title + mode switch
+  h+=`<div class="kb-editor-topbar" style="display:flex;align-items:center;gap:12px">
+    <input id="kbTitle" placeholder="标题" value="${esc(title)}" ${inEdit?'':'readonly'} onchange="kbAutoSave()" style="flex:1">`;
+  if(isAdmin){
+    h+=`<div class="kb-mode-switch">
+      <span>${kbEditMode?'':'查看'}</span>
+      <div class="switch${kbEditMode?' on':''}" onclick="kbToggleMode()"></div>
+      <span class="mode-label">${kbEditMode?'编辑':''}</span>
     </div>`;
+  }
+  h+=`</div>`;
   
-  if(editable){
+  h+=`<div class="kb-editor-meta">
+    <div class="fg-inline"><label>标签</label><input id="kbTags" placeholder="逗号分隔，如：产品, 设计" value="${esc(tags)}" style="width:240px" ${inEdit?'':'readonly'} onchange="kbAutoSave()"></div>
+  </div>`;
+  
+  if(inEdit){
     h+=`<div class="kb-editor-toolbar">
-      <button onclick="document.execCommand('bold')"><b>B</b></button>
-      <button onclick="document.execCommand('italic')"><i>I</i></button>
-      <button onclick="document.execCommand('underline')"><u>U</u></button>
+      <button onclick="kbUndo()" title="撤回 \u2318Z">\u21a9</button>
+      <button onclick="kbRedo()" title="重做 \u2318\u21e7Z">\u21aa</button>
+      <span style="width:1px;height:16px;background:var(--border);margin:0 2px"></span>
+      <button onclick="document.execCommand('bold')" title="加粗 \u2318B"><b>B</b></button>
+      <button onclick="document.execCommand('italic')" title="斜体 \u2318I"><i>I</i></button>
+      <button onclick="document.execCommand('underline')" title="下划线 \u2318U"><u>U</u></button>
       <button onclick="document.execCommand('strikeThrough')"><s>S</s></button>
       <button onclick="document.execCommand('insertUnorderedList')">• 列表</button>
       <button onclick="document.execCommand('insertOrderedList')">1. 列表</button>
-      <button onclick="document.getElementById('kbImgInput').click()">📷 图片</button>
+      <button onclick="document.getElementById('kbImgInput').click()">\ud83d\udcf7 图片</button>
     </div>`;
   }
   
-  h+=`<div class="kb-editor-body" id="kbBody" contenteditable="${editable}" data-placeholder="在这里记录知识要点、学习笔记、参考链接…&#10;&#10;支持粘贴或上传图片">${body}</div>`;
+  h+=`<div class="kb-editor-body" id="kbBody" contenteditable="${inEdit}" data-placeholder="在这里记录知识要点、学习笔记、参考链接\u2026\u000a\u000a支持粘贴或上传图片">${body}</div>`;
   
-  if(editable){
+  if(inEdit){
     h+=`<input type="file" id="kbImgInput" class="kb-img-upload" accept="image/*" onchange="kbInsertImg(this)">`;
-    h+=`<div class="kb-editor-foot">
-      <span style="font-size:11px;color:var(--text3)">${isNew?'新建':'编辑中'} · 自动保存</span>
-      <button class="btn btn-primary btn-sm" onclick="kbSaveAndBack()">完成</button>
-    </div>`;
   }
+  
+  h+=`<div class="kb-editor-foot">
+    <span style="font-size:11px;color:var(--text3)">${inEdit?(isNew?'新建':'编辑中')+' \u00b7 自动保存 \u00b7 \u2318S 保存':'查看模式'}</span>
+    ${inEdit?'<button class="btn btn-primary btn-sm" onclick="kbSaveAndBack()">完成</button>':''}
+  </div>`;
   
   h+=`</div>`;
   $c(h);
   
-  // Setup paste handler for images
-  if(editable){
+  // Setup editor events
+  if(inEdit){
     setTimeout(()=>{
       const el=document.getElementById('kbBody');
       if(!el)return;
       el.addEventListener('paste',kbHandlePaste);
-      el.addEventListener('input',kbAutoSave);
+      el.addEventListener('input',kbOnInput);
       el.addEventListener('click',kbBodyClick);
+      el.addEventListener('keydown',kbKeydown);
       document.addEventListener('click',kbDocClick);
       kbSetupImages();
+      // Init undo history
+      kbHistoryInit(el.innerHTML);
     },50);
   }
+}
+
+// ===== Edit/View mode toggle =====
+let kbEditMode=true;
+function kbToggleMode(){
+  // Save current content before switching
+  if(kbEditMode) kbAutoSaveNow();
+  kbEditMode=!kbEditMode;
+  rKBEditor();
+}
+
+// ===== Undo/Redo system =====
+let kbHistory=[];
+let kbHistoryIdx=-1;
+let kbHistoryTimer=null;
+const KB_HISTORY_MAX=100;
+
+function kbHistoryInit(html){
+  kbHistory=[html];
+  kbHistoryIdx=0;
+}
+function kbHistoryPush(){
+  const el=document.getElementById('kbBody');
+  if(!el)return;
+  const html=el.innerHTML;
+  // Don't push if same as current
+  if(kbHistory[kbHistoryIdx]===html)return;
+  // Truncate future states
+  kbHistory=kbHistory.slice(0,kbHistoryIdx+1);
+  kbHistory.push(html);
+  if(kbHistory.length>KB_HISTORY_MAX)kbHistory.shift();
+  kbHistoryIdx=kbHistory.length-1;
+}
+function kbHistorySchedule(){
+  clearTimeout(kbHistoryTimer);
+  kbHistoryTimer=setTimeout(kbHistoryPush,500);
+}
+function kbUndo(){
+  if(kbHistoryIdx<=0)return;
+  kbHistoryPush(); // save current first
+  kbHistoryIdx--;
+  const el=document.getElementById('kbBody');
+  if(el){el.innerHTML=kbHistory[kbHistoryIdx];kbSetupImages();kbAutoSave()}
+}
+function kbRedo(){
+  if(kbHistoryIdx>=kbHistory.length-1)return;
+  kbHistoryIdx++;
+  const el=document.getElementById('kbBody');
+  if(el){el.innerHTML=kbHistory[kbHistoryIdx];kbSetupImages();kbAutoSave()}
+}
+
+// ===== Keyboard shortcuts =====
+function kbKeydown(e){
+  const mod=e.metaKey||e.ctrlKey;
+  if(mod&&e.key==='z'&&!e.shiftKey){e.preventDefault();kbUndo();return}
+  if(mod&&e.key==='z'&&e.shiftKey){e.preventDefault();kbRedo();return}
+  if(mod&&e.key==='y'){e.preventDefault();kbRedo();return}
+  if(mod&&e.key==='s'){e.preventDefault();kbAutoSaveNow();toast('已保存');return}
+}
+
+function kbOnInput(){
+  kbHistorySchedule();
+  kbAutoSave();
+}
+
+function kbAutoSaveNow(){
+  clearTimeout(kbSaveTimer);
+  const title=(document.getElementById('kbTitle')?.value||'').trim();
+  if(!title)return;
+  if(!D.knowledge)D.knowledge=[];
+  const body=document.getElementById('kbBody')?.innerHTML||'';
+  const tags=(document.getElementById('kbTags')?.value||'').split(/[,\uff0c]/).map(s=>s.trim()).filter(Boolean);
+  if(kbEditing==='new'){
+    const nk={id:uid(),title,body,tags,ct:new Date().toISOString()};
+    D.knowledge.push(nk);kbEditing=nk.id;
+  }else{
+    const k=D.knowledge.find(x=>x.id===kbEditing);
+    if(k){k.title=title;k.body=body;k.tags=tags}
+  }
+  sbSave();
 }
 
 // Image drag-resize
@@ -656,23 +761,7 @@ let kbSaveTimer=null;
 function kbAutoSave(){
   if(!isAdmin)return;
   clearTimeout(kbSaveTimer);
-  kbSaveTimer=setTimeout(()=>{
-    const title=(document.getElementById('kbTitle')?.value||'').trim();
-    if(!title)return;
-    if(!D.knowledge)D.knowledge=[];
-    const body=document.getElementById('kbBody')?.innerHTML||'';
-    const tags=(document.getElementById('kbTags')?.value||'').split(/[,，]/).map(s=>s.trim()).filter(Boolean);
-    
-    if(kbEditing==='new'){
-      const nk={id:uid(),title,body,tags,ct:new Date().toISOString()};
-      D.knowledge.push(nk);
-      kbEditing=nk.id; // switch from 'new' to actual id
-    }else{
-      const k=D.knowledge.find(x=>x.id===kbEditing);
-      if(k){k.title=title;k.body=body;k.tags=tags}
-    }
-    sbSave();
-  },800);
+  kbSaveTimer=setTimeout(kbAutoSaveNow,800);
 }
 
 function kbSaveAndBack(){
