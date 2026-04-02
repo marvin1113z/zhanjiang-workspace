@@ -203,12 +203,15 @@ textarea{resize:vertical}
 .kb-card-foot{font-size:10px;color:var(--text3);margin-top:6px}
 /* Knowledge editor — full area */
 .kb-editor{display:flex;flex-direction:column;height:100%}
-.kb-editor-topbar{margin-bottom:8px}
-.kb-editor-topbar input{width:100%;font-size:18px;font-weight:600;border:none;padding:0;background:transparent;line-height:1.4}
-.kb-editor-topbar input:focus{outline:none}
-.kb-editor-topbar input::placeholder{color:var(--text3)}
+.kb-editor-topbar{margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.kb-title-display{font-size:18px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kb-title-display input{width:100%;font-size:18px;font-weight:600;border:none;border-bottom:1.5px solid var(--accent);padding:0 0 2px;background:transparent;line-height:1.4;outline:none}
+.kb-title-display input::placeholder{color:var(--text3)}
+.kb-edit-icon{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:4px;color:var(--text3);cursor:pointer;transition:var(--tr);flex-shrink:0;font-size:12px}
+.kb-edit-icon:hover{background:var(--bg3);color:var(--text)}
 .kb-editor-meta{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
-.kb-editor-meta input{width:auto;font-size:12px;padding:4px 8px}
+.kb-tags-display{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.kb-tags-display input{font-size:12px;padding:4px 8px;width:220px;border:1px solid var(--accent);border-radius:var(--radius)}
 .kb-editor-meta .fg-inline{display:flex;align-items:center;gap:4px}
 .kb-editor-meta .fg-inline label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;white-space:nowrap;margin:0}
 .kb-editor-body{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px;min-height:300px;font-size:13.5px;line-height:1.8;overflow-y:auto;outline:none;color:var(--text);position:relative}
@@ -224,6 +227,18 @@ textarea{resize:vertical}
 .kb-editor-body table td,.kb-editor-body table th{border:1px solid var(--border);padding:6px 10px;text-align:left;min-width:60px}
 .kb-editor-body table th{background:var(--bg3);font-weight:600;font-size:12px}
 .kb-editor-body table td:focus{outline:none;background:rgba(0,0,0,.02)}
+.kb-editor-body table.kb-table-selected{outline:2px solid var(--accent);outline-offset:1px}
+/* Table size picker */
+.kb-table-picker{position:absolute;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);padding:12px;z-index:20}
+.kb-table-grid{display:grid;gap:3px;margin-bottom:8px}
+.kb-table-cell{width:20px;height:20px;border:1px solid var(--border);border-radius:2px;cursor:pointer;transition:var(--tr)}
+.kb-table-cell.active{background:var(--accent);border-color:var(--accent)}
+.kb-table-cell:hover{border-color:var(--accent)}
+.kb-table-size{text-align:center;font-size:11px;color:var(--text2);font-weight:500}
+/* Table context menu */
+.kb-table-menu{position:fixed;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);z-index:20;padding:4px;min-width:120px}
+.kb-table-menu button{display:block;width:100%;text-align:left;padding:6px 10px;font-size:12px;color:var(--text2);border-radius:3px;transition:var(--tr)}
+.kb-table-menu button:hover{background:var(--bg3);color:var(--text)}
 /* KB update time */
 .kb-update-time{font-size:10.5px;color:var(--text3);margin-left:auto}
 .kb-editor-body[contenteditable="false"]{cursor:default}
@@ -383,7 +398,7 @@ let view='dashboard',curProj=null,editP=null,editT=null,editK=null,tlScope='all'
 let nwStep=1,nwType=null,nwProjId=null,nwText='',nwMakeTask=null;
 let tlCollapsed={};
 
-function go(v,pid){view=v;curProj=pid||null;filter='all';nwStep=1;nwType=null;nwProjId=null;nwText='';nwMakeTask=null;kbEditing=null;
+function go(v,pid){view=v;curProj=pid||null;filter='all';nwStep=1;nwType=null;nwProjId=null;nwText='';nwMakeTask=null;kbEditing=null;kbTitleEditing=false;kbTagsEditing=false;
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.v===v&&!pid));
   document.querySelectorAll('.project-item').forEach(n=>n.classList.toggle('active',n.dataset.id===pid));R()}
 function R(){rPL();({dashboard:rDash,project:rProj,timeline:rTL,notes:rNotes,knowledge:rKB})[view]?.()}
@@ -468,9 +483,16 @@ function rKBEditor(){
   
   let h=`<div class="kb-editor">`;
   
-  // Top bar: title + update time + mode switch
-  h+=`<div class="kb-editor-topbar" style="display:flex;align-items:center;gap:12px">
-    <input id="kbTitle" placeholder="标题" value="${esc(title)}" ${inEdit?'':'readonly'} onchange="kbAutoSave()" style="flex:1">
+  // Top bar: title (display/edit) + update time + mode switch
+  h+=`<div class="kb-editor-topbar">
+    <div class="kb-title-display" id="kbTitleWrap">`;
+  if(kbTitleEditing){
+    h+=`<input id="kbTitle" placeholder="标题" value="${esc(title)}" onblur="kbFinishTitleEdit()" onkeydown="if(event.key==='Enter'){event.preventDefault();kbFinishTitleEdit()}" autofocus>`;
+  }else{
+    h+=`<span style="cursor:default">${title||'<span style="color:var(--text3)">无标题</span>'}</span>`;
+    if(isAdmin) h+=` <span class="kb-edit-icon" onclick="kbStartTitleEdit()" title="编辑标题">✎</span>`;
+  }
+  h+=`</div>
     ${updatedAt?`<span class="kb-update-time">修改于 ${updatedAt}</span>`:''}`;
   if(isAdmin){
     h+=`<div class="kb-mode-switch">
@@ -481,9 +503,18 @@ function rKBEditor(){
   }
   h+=`</div>`;
   
-  h+=`<div class="kb-editor-meta">
-    <div class="fg-inline"><label>标签</label><input id="kbTags" placeholder="逗号分隔，如：产品, 设计" value="${esc(tags)}" style="width:240px" ${inEdit?'':'readonly'} onchange="kbAutoSave()"></div>
-  </div>`;
+  // Tags: display values + edit icon
+  h+=`<div class="kb-editor-meta"><div class="fg-inline"><label>标签</label>
+    <div class="kb-tags-display" id="kbTagsWrap">`;
+  if(kbTagsEditing){
+    h+=`<input id="kbTags" placeholder="逗号分隔，如：产品, 设计" value="${esc(tags)}" onblur="kbFinishTagsEdit()" onkeydown="if(event.key==='Enter'){event.preventDefault();kbFinishTagsEdit()}" autofocus>`;
+  }else{
+    const tagArr=(tags||'').split(/[,\uff0c]/).map(s=>s.trim()).filter(Boolean);
+    if(tagArr.length){tagArr.forEach(t=>{h+=`<span class="kb-tag">${esc(t)}</span>`})}
+    else{h+=`<span style="font-size:12px;color:var(--text3)">无</span>`}
+    if(isAdmin) h+=` <span class="kb-edit-icon" onclick="kbStartTagsEdit()" title="编辑标签">✎</span>`;
+  }
+  h+=`</div></div></div>`;
   
   if(inEdit){
     h+=`<div class="kb-editor-toolbar">
@@ -524,6 +555,7 @@ function rKBEditor(){
       el.addEventListener('input',kbOnInput);
       el.addEventListener('click',kbBodyClick);
       el.addEventListener('keydown',kbKeydown);
+      el.addEventListener('contextmenu',kbTableContextMenu);
       document.addEventListener('click',kbDocClick);
       kbSetupImages();
       // Init undo history
@@ -534,11 +566,44 @@ function rKBEditor(){
 
 // ===== Edit/View mode toggle =====
 let kbEditMode=false;
+let kbTitleEditing=false;
+let kbTagsEditing=false;
+
 function kbToggleMode(){
-  // Save current content before switching
   if(kbEditMode) kbAutoSaveNow();
   kbEditMode=!kbEditMode;
   rKBEditor();
+}
+
+function kbStartTitleEdit(){kbTitleEditing=true;rKBEditor();setTimeout(()=>{const el=document.getElementById('kbTitle');if(el){el.focus();el.select()}},50)}
+function kbFinishTitleEdit(){
+  const el=document.getElementById('kbTitle');
+  if(el){
+    const v=el.value.trim();
+    if(v){
+      if(!D.knowledge)D.knowledge=[];
+      if(kbEditing==='new'){
+        const nk={id:uid(),title:v,body:'',tags:[],ct:new Date().toISOString(),ut:new Date().toISOString()};
+        D.knowledge.push(nk);kbEditing=nk.id;
+      }else{
+        const k=D.knowledge.find(x=>x.id===kbEditing);
+        if(k){k.title=v;k.ut=new Date().toISOString()}
+      }
+      sbSave();
+    }
+  }
+  kbTitleEditing=false;rKBEditor();
+}
+
+function kbStartTagsEdit(){kbTagsEditing=true;rKBEditor();setTimeout(()=>{const el=document.getElementById('kbTags');if(el)el.focus()},50)}
+function kbFinishTagsEdit(){
+  const el=document.getElementById('kbTags');
+  if(el&&kbEditing!=='new'){
+    const tags=el.value.split(/[,\uff0c]/).map(s=>s.trim()).filter(Boolean);
+    const k=(D.knowledge||[]).find(x=>x.id===kbEditing);
+    if(k){k.tags=tags;k.ut=new Date().toISOString();sbSave()}
+  }
+  kbTagsEditing=false;rKBEditor();
 }
 
 // ===== Undo/Redo system =====
@@ -726,21 +791,132 @@ function kbSetupImages(){
   });
 }
 
+// Table size picker
+let kbTablePickerOpen=false;
 function kbInsertTable(){
-  const el=document.getElementById('kbBody');
-  if(!el)return;
-  el.focus();
+  if(kbTablePickerOpen){kbCloseTablePicker();return}
+  const btn=document.querySelector('.kb-editor-toolbar button:last-child');
+  if(!btn)return;
+  const rect=btn.getBoundingClientRect();
+  const picker=document.createElement('div');
+  picker.className='kb-table-picker';
+  picker.id='kbTablePicker';
+  picker.style.top=(rect.bottom+4)+'px';
+  picker.style.left=rect.left+'px';
+  let pickerRows=0,pickerCols=0;
+  picker.innerHTML=`<div class="kb-table-grid" id="kbTGrid" style="grid-template-columns:repeat(6,20px)"></div><div class="kb-table-size" id="kbTSize">选择行列数</div>`;
+  document.body.appendChild(picker);
+  kbTablePickerOpen=true;
+  const grid=document.getElementById('kbTGrid');
+  for(let r=1;r<=6;r++){for(let c=1;c<=6;c++){
+    const cell=document.createElement('div');
+    cell.className='kb-table-cell';
+    cell.dataset.r=r;cell.dataset.c=c;
+    cell.addEventListener('mouseenter',()=>{
+      pickerRows=r;pickerCols=c;
+      grid.querySelectorAll('.kb-table-cell').forEach(cl=>{
+        cl.classList.toggle('active',parseInt(cl.dataset.r)<=r&&parseInt(cl.dataset.c)<=c)});
+      document.getElementById('kbTSize').textContent=r+' x '+c;
+    });
+    cell.addEventListener('click',()=>{kbDoInsertTable(pickerRows,pickerCols);kbCloseTablePicker()});
+    grid.appendChild(cell);
+  }}
+  setTimeout(()=>document.addEventListener('click',kbTablePickerOutside),10);
+}
+function kbTablePickerOutside(e){if(!e.target.closest('#kbTablePicker')&&!e.target.closest('.kb-editor-toolbar'))kbCloseTablePicker()}
+function kbCloseTablePicker(){
+  const p=document.getElementById('kbTablePicker');if(p)p.remove();
+  kbTablePickerOpen=false;
+  document.removeEventListener('click',kbTablePickerOutside);
+}
+function kbDoInsertTable(rows,cols){
+  const el=document.getElementById('kbBody');if(!el)return;el.focus();
   const table=document.createElement('table');
   const thead=document.createElement('thead');
   const hrow=document.createElement('tr');
-  for(let i=0;i<3;i++){const th=document.createElement('th');th.textContent='标题'+(i+1);hrow.appendChild(th)}
+  for(let c=0;c<cols;c++){const th=document.createElement('th');th.textContent='标题'+(c+1);hrow.appendChild(th)}
   thead.appendChild(hrow);table.appendChild(thead);
   const tbody=document.createElement('tbody');
-  for(let r=0;r<2;r++){const row=document.createElement('tr');for(let c=0;c<3;c++){const td=document.createElement('td');td.innerHTML='&nbsp;';row.appendChild(td)}tbody.appendChild(row)}
+  for(let r=0;r<rows-1;r++){const row=document.createElement('tr');for(let c=0;c<cols;c++){const td=document.createElement('td');td.innerHTML='&nbsp;';row.appendChild(td)}tbody.appendChild(row)}
   table.appendChild(tbody);
   const sel=window.getSelection();
   if(sel.rangeCount){const range=sel.getRangeAt(0);range.deleteContents();range.insertNode(table);range.collapse(false)}
   else{el.appendChild(table)}
+  kbAutoSave();
+}
+
+// Table right-click context menu for editing rows/cols
+function kbTableContextMenu(e){
+  const td=e.target.closest('td,th');
+  if(!td||!isAdmin||!kbEditMode)return;
+  const table=td.closest('table');
+  if(!table||!document.getElementById('kbBody')?.contains(table))return;
+  e.preventDefault();
+  kbCloseTableMenu();
+  const menu=document.createElement('div');
+  menu.className='kb-table-menu';
+  menu.id='kbTableMenu';
+  menu.style.top=e.clientY+'px';
+  menu.style.left=e.clientX+'px';
+  const ri=td.closest('tr');
+  const ci=Array.from(ri.children).indexOf(td);
+  menu.innerHTML=`
+    <button onclick="kbTableAddRow('${table.id||''}','above',${Array.from(table.querySelectorAll('tr')).indexOf(ri)})">↑ 上方插入行</button>
+    <button onclick="kbTableAddRow('${table.id||''}','below',${Array.from(table.querySelectorAll('tr')).indexOf(ri)})">↓ 下方插入行</button>
+    <button onclick="kbTableAddCol('${table.id||''}','before',${ci})">← 左侧插入列</button>
+    <button onclick="kbTableAddCol('${table.id||''}','after',${ci})">→ 右侧插入列</button>
+    <button onclick="kbTableDelRow('${table.id||''}',${Array.from(table.querySelectorAll('tr')).indexOf(ri)})" style="color:var(--danger)">删除此行</button>
+    <button onclick="kbTableDelCol('${table.id||''}',${ci})" style="color:var(--danger)">删除此列</button>`;
+  // Tag table for lookup
+  if(!table.id){table.id='kbt_'+uid()}
+  menu.querySelector('button:first-child').closest('.kb-table-menu').querySelectorAll('button').forEach(b=>{
+    const orig=b.getAttribute('onclick');
+    b.setAttribute('onclick',orig.replace(/''/g,"'"+table.id+"'"));
+  });
+  document.body.appendChild(menu);
+  setTimeout(()=>document.addEventListener('click',kbCloseTableMenuOut),10);
+}
+function kbCloseTableMenuOut(){kbCloseTableMenu()}
+function kbCloseTableMenu(){
+  const m=document.getElementById('kbTableMenu');if(m)m.remove();
+  document.removeEventListener('click',kbCloseTableMenuOut);
+}
+
+function kbGetTable(tid){return document.getElementById(tid)}
+function kbTableAddRow(tid,pos,ri){
+  const t=kbGetTable(tid);if(!t)return;kbCloseTableMenu();
+  const rows=t.querySelectorAll('tr');
+  const ref=rows[ri];if(!ref)return;
+  const cols=ref.children.length;
+  const nr=document.createElement('tr');
+  for(let i=0;i<cols;i++){const td=document.createElement('td');td.innerHTML='&nbsp;';nr.appendChild(td)}
+  if(pos==='above')ref.parentNode.insertBefore(nr,ref);
+  else ref.parentNode.insertBefore(nr,ref.nextSibling);
+  kbAutoSave();
+}
+function kbTableAddCol(tid,pos,ci){
+  const t=kbGetTable(tid);if(!t)return;kbCloseTableMenu();
+  t.querySelectorAll('tr').forEach(row=>{
+    const cell=row.children[ci];
+    const isHead=cell&&cell.tagName==='TH';
+    const nc=document.createElement(isHead?'th':'td');
+    nc.innerHTML=isHead?'标题':'&nbsp;';
+    if(pos==='before')row.insertBefore(nc,cell);
+    else row.insertBefore(nc,cell?cell.nextSibling:null);
+  });
+  kbAutoSave();
+}
+function kbTableDelRow(tid,ri){
+  const t=kbGetTable(tid);if(!t)return;kbCloseTableMenu();
+  const rows=t.querySelectorAll('tr');
+  if(rows.length<=1){toast('至少保留一行');return}
+  rows[ri]?.remove();kbAutoSave();
+}
+function kbTableDelCol(tid,ci){
+  const t=kbGetTable(tid);if(!t)return;kbCloseTableMenu();
+  const firstRow=t.querySelector('tr');
+  if(firstRow&&firstRow.children.length<=1){toast('至少保留一列');return}
+  t.querySelectorAll('tr').forEach(row=>{row.children[ci]?.remove()});
   kbAutoSave();
 }
 
