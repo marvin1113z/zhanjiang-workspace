@@ -662,17 +662,26 @@ function kbOnInput(){
 
 function kbAutoSaveNow(){
   clearTimeout(kbSaveTimer);
-  const title=(document.getElementById('kbTitle')?.value||'').trim();
-  if(!title)return;
   if(!D.knowledge)D.knowledge=[];
   const body=document.getElementById('kbBody')?.innerHTML||'';
-  const tags=(document.getElementById('kbTags')?.value||'').split(/[,\uff0c]/).map(s=>s.trim()).filter(Boolean);
+  // Title: read from input if editing, otherwise from data
+  const titleEl=document.getElementById('kbTitle');
+  const tagsEl=document.getElementById('kbTags');
+  
   if(kbEditing==='new'){
+    const title=titleEl?titleEl.value.trim():'';
+    if(!title)return;
+    const tags=tagsEl?tagsEl.value.split(/[,\uff0c]/).map(s=>s.trim()).filter(Boolean):[];
     const nk={id:uid(),title,body,tags,ct:new Date().toISOString(),ut:new Date().toISOString()};
     D.knowledge.push(nk);kbEditing=nk.id;
   }else{
     const k=D.knowledge.find(x=>x.id===kbEditing);
-    if(k){k.title=title;k.body=body;k.tags=tags;k.ut=new Date().toISOString()}
+    if(k){
+      if(titleEl)k.title=titleEl.value.trim()||k.title;
+      if(tagsEl)k.tags=tagsEl.value.split(/[,\uff0c]/).map(s=>s.trim()).filter(Boolean);
+      k.body=body;
+      k.ut=new Date().toISOString();
+    }
   }
   sbSave();
 }
