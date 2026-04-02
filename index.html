@@ -452,7 +452,7 @@ function rKB(){
         <div class="kb-card-title">${esc(k.title)}</div>
         ${preview?`<div class="kb-card-preview">${esc(preview)}</div>`:''}
         ${tags.length?`<div class="kb-card-tags">${tags.map(t=>`<span class="kb-tag">${esc(t)}</span>`).join('')}</div>`:''}
-        <div class="kb-card-foot">${k.ut?'修改于 '+fmt(k.ut):'创建于 '+fmt(k.ct)}</div>
+        <div class="kb-card-foot">创建 ${fmt(k.ct)}${k.ut?' · 修改 '+fmt(k.ut):''}</div>
       </div>`;
     });
   }else{
@@ -493,7 +493,7 @@ function rKBEditor(){
     if(isAdmin) h+=` <span class="kb-edit-icon" onclick="kbStartTitleEdit()" title="编辑标题">✎</span>`;
   }
   h+=`</div>
-    ${updatedAt?`<span class="kb-update-time">修改于 ${updatedAt}</span>`:''}`;
+    `;
   if(isAdmin){
     h+=`<div class="kb-mode-switch">
       <span>${kbEditMode?'':'查看'}</span>
